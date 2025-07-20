@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Crypto Tap Game</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         /* Custom scrollbar for better aesthetics */
@@ -848,7 +850,7 @@
                 if (gameState.isRedeemed) {
                     redeemStatusMessage.textContent = "Reward already redeemed!";
                 } else if (gameState.referredCount < REDEEM_REQUIREMENTS.referrals && gameState.xp < REDEEM_REQUIREMENTS.xp) {
-                    redeeemStatusMessage.textContent = "Tasks not completed yet.";
+                    redeemStatusMessage.textContent = "Tasks not completed yet.";
                 } else if (gameState.referredCount < REDEEM_REQUIREMENTS.referrals) {
                     redeemStatusMessage.textContent = `Need ${REDEEM_REQUIREMENTS.referrals - gameState.referredCount} more referrals.`;
                 } else if (gameState.xp < REDEEM_REQUIREMENTS.xp) {
@@ -1040,39 +1042,6 @@
         }
 
         /**
-         * Handles the redemption process. (New)
-         */
-        async function handleRedeem() {
-            console.log("Redeem button clicked!");
-            if (gameState.isRedeemed) {
-                showMessage("Reward already redeemed!", 'info');
-                return;
-            }
-
-            const referralsMet = gameState.referredCount >= REDEEM_REQUIREMENTS.referrals;
-            const coinsMet = gameState.xp >= REDEEM_REQUIREMENTS.xp;
-
-            if (referralsMet && coinsMet) {
-                gameState.coins += REDEEM_REQUIREMENTS.reward;
-                gameState.xp += REDEEM_REQUIREMENTS.reward; // XP for redemption reward
-                gameState.isRedeemed = true;
-                showMessage(`Redeemed! You received ${REDEEM_REQUIREMENTS.reward.toLocaleString()} coins!`, 'success');
-                updateUI();
-                await saveGameState();
-                checkLevelUp();
-            } else {
-                let message = "You have not met all redemption requirements:";
-                if (!referralsMet) {
-                    message += ` Need ${REDEEM_REQUIREMENTS.referrals - gameState.referredCount} more referrals.`;
-                }
-                if (!coinsMet) {
-                    message += ` Need ${(REDEEM_REQUIREMENTS.xp - gameState.xp).toLocaleString()} more XP.`;
-                }
-                showMessage(message, 'error');
-            }
-        }
-
-        /**
          * Starts the energy regeneration and passive income loops.
          */
         function startGameLoops() {
@@ -1107,6 +1076,39 @@
         }
 
         /**
+         * Handles the redemption process. (New)
+         */
+        async function handleRedeem() {
+            console.log("Redeem button clicked!");
+            if (gameState.isRedeemed) {
+                showMessage("Reward already redeemed!", 'info');
+                return;
+            }
+
+            const referralsMet = gameState.referredCount >= REDEEM_REQUIREMENTS.referrals;
+            const coinsMet = gameState.xp >= REDEEM_REQUIREMENTS.xp;
+
+            if (referralsMet && coinsMet) {
+                gameState.coins += REDEEM_REQUIREMENTS.reward;
+                gameState.xp += REDEEM_REQUIREMENTS.reward; // XP for redemption reward
+                gameState.isRedeemed = true;
+                showMessage(`Redeemed! You received ${REDEEM_REQUIREMENTS.reward.toLocaleString()} coins!`, 'success');
+                updateUI();
+                await saveGameState();
+                checkLevelUp();
+            } else {
+                let message = "You have not met all redemption requirements:";
+                if (!referralsMet) {
+                    message += ` Need ${REDEEM_REQUIREMENTS.referrals - gameState.referredCount} more referrals.`;
+                }
+                if (!coinsMet) {
+                    message += ` Need ${(REDEEM_REQUIREMENTS.xp - gameState.xp).toLocaleString()} more XP.`;
+                }
+                showMessage(message, 'error');
+            }
+        }
+
+        /**
          * Generates a random alphanumeric code.
          * @param {number} length The desired length of the code.
          * @returns {string} The generated random code.
@@ -1119,67 +1121,6 @@
                 result += characters.charAt(Math.floor(Math.random() * charactersLength));
             }
             return result;
-        }
-
-        // Event Listeners for Main Game Buttons (now part of bottom nav)
-        dailyRewardBtn.addEventListener('click', claimDailyReward);
-
-        // Bottom Navigation Event Listeners (New)
-        navHomeBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Home clicked!"); showSection(gameSection); });
-        navUpgradesBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Upgrades clicked!"); showSection(upgradesSection); });
-        navMinesBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Mines clicked!"); showSection(miningSection); });
-        navReferralsBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Referrals clicked!"); showSection(referralsSection); });
-        navRedeemBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Redeem clicked!"); showSection(redeemSection); updateUI(); }); // Update UI to refresh redeem status
-        navMembershipBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Membership clicked!"); showSection(membershipSection); });
-
-        // Back buttons
-        closeUpgradesBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Closing upgrades section!"); showSection(gameSection); });
-        closeMiningBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Closing mining section!"); showSection(gameSection); });
-        closeReferralsBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Closing referrals section!"); showSection(gameSection); });
-        closeRedeemBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Closing redeem section!"); showSection(gameSection); });
-        closeMembershipBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Closing membership section!"); showSection(gameSection); });
-
-        // Other action buttons
-        claimProfitBtn.addEventListener('click', claimAccumulatedProfit);
-        upgradeTapPowerBtn.addEventListener('click', () => purchaseUpgrade('tapPower'));
-        upgradeEnergyCapacityBtn.addEventListener('click', () => purchaseUpgrade('energyCapacity'));
-        upgradeEnergyRegenBtn.addEventListener('click', () => purchaseUpgrade('energyRegen'));
-        copyReferralLinkBtn.addEventListener('click', () => {
-            const referralLink = referralLinkDisplay.textContent;
-            if (referralLink && referralLink !== 'Loading referral link...') {
-                const tempInput = document.createElement('textarea');
-                tempInput.value = referralLink;
-                document.body.appendChild(tempInput);
-                tempInput.select();
-                document.execCommand('copy');
-                document.body.removeChild(tempInput);
-                showMessage('Referral link copied!', 'success');
-            } else {
-                showMessage('Referral link not available yet.', 'info');
-            }
-        });
-        redeemCoinsBtn.addEventListener('click', handleRedeem); // New event listener for redeem button
-
-
-        /**
-         * Helper function to show only one section and hide others.
-         * @param {HTMLElement} sectionToShow The section element to display.
-         */
-        function showSection(sectionToShow) {
-            console.log(`Attempting to show section: ${sectionToShow.id}`);
-            // Hide all main sections by adding 'hidden' class
-            gameSection.classList.add('hidden');
-            upgradesSection.classList.add('hidden');
-            miningSection.classList.add('hidden');
-            referralsSection.classList.add('hidden'); // New
-            redeemSection.classList.add('hidden');     // New
-            membershipSection.classList.add('hidden'); // New
-            referralInputSection.classList.add('hidden'); // Also hide referral input if it was visible
-            telegramOnlyMessage.classList.add('hidden'); // Ensure this is also hidden
-
-            // Show the desired section by removing 'hidden' class
-            sectionToShow.classList.remove('hidden');
-            console.log(`Section ${sectionToShow.id} visibility: ${!sectionToShow.classList.contains('hidden')}`);
         }
 
         /**
@@ -1361,6 +1302,123 @@
         document.addEventListener('DOMContentLoaded', () => {
             console.log("DOMContentLoaded fired. Initializing...");
             loadingOverlay.classList.remove('hidden'); // Always show loading initially
+
+            // Assign UI elements after DOMContentLoaded
+            loadingOverlay = document.getElementById('loading-overlay');
+            telegramOnlyMessage = document.getElementById('telegram-only-message');
+            referralInputSection = document.getElementById('referral-input-section');
+            referralCodeInput = document.getElementById('referral-code-input');
+            startGameBtn = document.getElementById('start-game-btn');
+
+            gameWrapper = document.getElementById('game-wrapper');
+            gameSection = document.getElementById('game-section');
+            userIdDisplay = document.getElementById('user-id-display');
+            coinsDisplay = document.getElementById('coins-display');
+            energyDisplay = document.getElementById('energy-display');
+            energyBarFill = document.getElementById('energy-bar-fill');
+            tapArea = document.getElementById('tap-area');
+            dailyRewardBtn = document.getElementById('daily-reward-btn');
+            
+            upgradesSection = document.getElementById('upgrades-section');
+            miningSection = document.getElementById('mining-section');
+            referralsSection = document.getElementById('referrals-section');
+            redeemSection = document.getElementById('redeem-section');
+            membershipSection = document.getElementById('membership-section');
+            
+            closeUpgradesBtn = document.getElementById('close-upgrades-btn');
+            closeMiningBtn = document.getElementById('close-mining-btn');
+            closeReferralsBtn = document.getElementById('close-referrals-btn');
+            closeRedeemBtn = document.getElementById('close-redeem-btn');
+            closeMembershipBtn = document.getElementById('close-membership-btn');
+            
+            messageBox = document.getElementById('message-box');
+            messageText = document.getElementById('message-text');
+
+            tapPowerLevel = document.getElementById('tap-power-level');
+            tapPowerIncrease = document.getElementById('tap-power-increase');
+            tapPowerCost = document.getElementById('tap-power-cost');
+            energyCapacityLevel = document.getElementById('energy-capacity-level');
+            energyCapacityIncrease = document.getElementById('energy-capacity-increase');
+            energyCapacityCost = document.getElementById('energy-capacity-cost');
+            energyRegenLevel = document.getElementById('energy-regen-level');
+            energyRegenIncrease = document.getElementById('energy-regen-increase');
+            energyRegenCost = document.getElementById('energy-regen-cost');
+            upgradeTapPowerBtn = document.getElementById('upgrade-tap-power');
+            upgradeEnergyCapacityBtn = document.getElementById('upgrade-energy-capacity');
+            upgradeEnergyRegenBtn = document.getElementById('upgrade-energy-regen');
+
+            hourlyProfitDisplay = document.getElementById('hourly-profit-display');
+            accumulatedProfitDisplay = document.getElementById('accumulated-profit-display');
+            claimProfitBtn = document.getElementById('claim-profit-btn');
+            cardsList = document.getElementById('cards-list');
+
+            playerLevelDisplay = document.getElementById('player-level-display');
+            playerXpDisplay = document.getElementById('player-xp-display');
+            nextLevelXpDisplay = document.getElementById('next-level-xp-display');
+            xpProgressBar = document.getElementById('xp-progress-bar');
+            levelRewardInfo = document.getElementById('level-reward-info');
+            nextLevelRewardDisplay = document.getElementById('next-level-reward-display');
+            referralLinkDisplay = document.getElementById('referral-link-display');
+            copyReferralLinkBtn = document.getElementById('copy-referral-link-btn');
+            referredCountDisplay = document.getElementById('referred-count-display');
+
+            redeemReferralsTask = document.getElementById('redeem-referrals-task');
+            redeemCoinsTask = document.getElementById('redeem-coins-task');
+            redeemCoinsBtn = document.getElementById('redeem-coins-btn');
+            redeemStatusMessage = document.getElementById('redeem-status-message');
+
+            navHomeBtn = document.getElementById('nav-home-btn');
+            navUpgradesBtn = document.getElementById('nav-upgrades-btn');
+            navMinesBtn = document.getElementById('nav-mines-btn');
+            navReferralsBtn = document.getElementById('nav-referrals-btn');
+            navRedeemBtn = document.getElementById('nav-redeem-btn');
+            navMembershipBtn = document.getElementById('nav-membership-btn');
+
+            // Attach Event Listeners after elements are assigned
+            tapArea.addEventListener('touchstart', (event) => {
+                event.preventDefault(); // Prevent default browser touch behavior (like scrolling/zooming)
+                // Handle each touch individually
+                for (let i = 0; i < event.touches.length; i++) {
+                    // Pass the individual touch object to handleTap
+                    handleTap(event.touches[i]);
+                }
+            });
+
+            dailyRewardBtn.addEventListener('click', claimDailyReward);
+
+            navHomeBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Home clicked!"); showSection(gameSection); });
+            navUpgradesBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Upgrades clicked!"); showSection(upgradesSection); });
+            navMinesBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Mines clicked!"); showSection(miningSection); });
+            navReferralsBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Referrals clicked!"); showSection(referralsSection); });
+            navRedeemBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Redeem clicked!"); showSection(redeemSection); updateUI(); });
+            navMembershipBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Membership clicked!"); showSection(membershipSection); });
+
+            closeUpgradesBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Closing upgrades section!"); showSection(gameSection); });
+            closeMiningBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Closing mining section!"); showSection(gameSection); });
+            closeReferralsBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Closing referrals section!"); showSection(gameSection); });
+            closeRedeemBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Closing redeem section!"); showSection(gameSection); });
+            closeMembershipBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Closing membership section!"); showSection(gameSection); });
+
+            claimProfitBtn.addEventListener('click', claimAccumulatedProfit);
+            upgradeTapPowerBtn.addEventListener('click', () => purchaseUpgrade('tapPower'));
+            upgradeEnergyCapacityBtn.addEventListener('click', () => purchaseUpgrade('energyCapacity'));
+            upgradeEnergyRegenBtn.addEventListener('click', () => purchaseUpgrade('energyRegen'));
+            copyReferralLinkBtn.addEventListener('click', () => {
+                const referralLink = referralLinkDisplay.textContent;
+                if (referralLink && referralLink !== 'Loading referral link...') {
+                    const tempInput = document.createElement('textarea');
+                    tempInput.value = referralLink;
+                    document.body.appendChild(tempInput);
+                    tempInput.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(tempInput);
+                    showMessage('Referral link copied!', 'success');
+                } else {
+                    showMessage('Referral link not available yet.', 'info');
+                }
+            });
+            redeemCoinsBtn.addEventListener('click', handleRedeem);
+
 
             // Check if Telegram WebApp object is available and has user data
             if (typeof window.Telegram !== 'undefined' && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
