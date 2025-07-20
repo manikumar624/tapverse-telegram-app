@@ -746,122 +746,131 @@
             energyBarFill.style.width = `${(gameState.energy / gameState.maxEnergy) * 100}%`;
 
             // Update upgrade section UI
-            tapPowerLevel.textContent = `(Lv. ${gameState.upgradeLevels.tapPower})`;
-            tapPowerIncrease.textContent = UPGRADE_CONFIG.tapPower.increment;
-            tapPowerCost.textContent = calculateUpgradeCost('tapPower');
+            if (tapPowerLevel) tapPowerLevel.textContent = `(Lv. ${gameState.upgradeLevels.tapPower})`;
+            if (tapPowerIncrease) tapPowerIncrease.textContent = UPGRADE_CONFIG.tapPower.increment;
+            if (tapPowerCost) tapPowerCost.textContent = calculateUpgradeCost('tapPower');
 
-            energyCapacityLevel.textContent = `(Lv. ${gameState.upgradeLevels.energyCapacity})`;
-            energyCapacityIncrease.textContent = UPGRADE_CONFIG.energyCapacity.increment;
-            energyCapacityCost.textContent = calculateUpgradeCost('energyCapacity');
+            if (energyCapacityLevel) energyCapacityLevel.textContent = `(Lv. ${gameState.upgradeLevels.energyCapacity})`;
+            if (energyCapacityIncrease) energyCapacityIncrease.textContent = UPGRADE_CONFIG.energyCapacity.increment;
+            if (energyCapacityCost) energyCapacityCost.textContent = calculateUpgradeCost('energyCapacity');
 
-            energyRegenLevel.textContent = `(Lv. ${gameState.upgradeLevels.energyRegen})`;
-            energyRegenIncrease.textContent = UPGRADE_CONFIG.energyRegen.increment.toFixed(1);
-            energyRegenCost.textContent = calculateUpgradeCost('energyRegen');
+            if (energyRegenLevel) energyRegenLevel.textContent = `(Lv. ${gameState.upgradeLevels.energyRegen})`;
+            if (energyRegenIncrease) energyRegenIncrease.textContent = UPGRADE_CONFIG.energyRegen.increment.toFixed(1);
+            if (energyRegenCost) energyRegenCost.textContent = calculateUpgradeCost('energyRegen');
 
             // Disable upgrade buttons if not enough coins
-            upgradeTapPowerBtn.disabled = gameState.coins < calculateUpgradeCost('tapPower');
-            upgradeEnergyCapacityBtn.disabled = gameState.coins < calculateUpgradeCost('energyCapacity');
-            upgradeEnergyRegenBtn.disabled = gameState.coins < calculateUpgradeCost('energyRegen');
+            if (upgradeTapPowerBtn) upgradeTapPowerBtn.disabled = gameState.coins < calculateUpgradeCost('tapPower');
+            if (upgradeEnergyCapacityBtn) upgradeEnergyCapacityBtn.disabled = gameState.coins < calculateUpgradeCost('energyCapacity');
+            if (upgradeEnergyRegenBtn) upgradeEnergyRegenBtn.disabled = gameState.coins < calculateUpgradeCost('energyRegen');
 
             // Update mining section UI
-            hourlyProfitDisplay.textContent = Math.floor(gameState.hourlyProfit);
-            accumulatedProfitDisplay.textContent = Math.floor(gameState.accumulatedProfit);
-            claimProfitBtn.disabled = gameState.accumulatedProfit <= 0;
+            if (hourlyProfitDisplay) hourlyProfitDisplay.textContent = Math.floor(gameState.hourlyProfit);
+            if (accumulatedProfitDisplay) accumulatedProfitDisplay.textContent = Math.floor(gameState.accumulatedProfit);
+            if (claimProfitBtn) claimProfitBtn.disabled = gameState.accumulatedProfit <= 0;
 
             // Render cards dynamically
-            cardsList.innerHTML = ''; // Clear existing cards
-            for (const cardId in CARD_CONFIG) {
-                const card = CARD_CONFIG[cardId];
-                const currentLevel = gameState.ownedCards[cardId] || 0;
-                const nextCost = calculateCardCost(cardId);
-                const currentProfit = calculateCardProfitPerHour(cardId, currentLevel);
-                const nextProfit = calculateCardProfitPerHour(cardId, currentLevel + 1);
-                const isMaxLevel = currentLevel >= card.maxLevel;
+            if (cardsList) {
+                cardsList.innerHTML = ''; // Clear existing cards
+                for (const cardId in CARD_CONFIG) {
+                    const card = CARD_CONFIG[cardId];
+                    const currentLevel = gameState.ownedCards[cardId] || 0;
+                    const nextCost = calculateCardCost(cardId);
+                    const currentProfit = calculateCardProfitPerHour(cardId, currentLevel);
+                    const nextProfit = calculateCardProfitPerHour(cardId, currentLevel + 1);
+                    const isMaxLevel = currentLevel >= card.maxLevel;
 
-                let isLocked = false;
-                let lockMessage = '';
-                if (card.unlockedBy) {
-                    const prerequisiteCardLevel = gameState.ownedCards[card.unlockedBy.cardId] || 0;
-                    if (prerequisiteCardLevel < card.unlockedBy.level) {
-                        isLocked = true;
-                        const prerequisiteCardName = CARD_CONFIG[card.unlockedBy.cardId] ? CARD_CONFIG[card.unlockedBy.cardId].name : 'Previous Card';
-                        lockMessage = `Requires ${prerequisiteCardName} Lv. ${card.unlockedBy.level}`;
+                    let isLocked = false;
+                    let lockMessage = '';
+                    if (card.unlockedBy) {
+                        const prerequisiteCardLevel = gameState.ownedCards[card.unlockedBy.cardId] || 0;
+                        if (prerequisiteCardLevel < card.unlockedBy.level) {
+                            isLocked = true;
+                            const prerequisiteCardName = CARD_CONFIG[card.unlockedBy.cardId] ? CARD_CONFIG[card.unlockedBy.cardId].name : 'Previous Card';
+                            lockMessage = `Requires ${prerequisiteCardName} Lv. ${card.unlockedBy.level}`;
+                        }
                     }
-                }
 
-                const cardElement = document.createElement('div');
-                cardElement.classList.add('flex', 'items-center', 'justify-between', 'bg-gray-800', 'p-4', 'rounded-lg', 'shadow-md');
-                if (isLocked) { // Only add opacity-50 if locked
-                    cardElement.classList.add('opacity-50');
-                }
-                cardElement.innerHTML = `
-                    <div>
-                        <h3 class="font-semibold text-lg ${isLocked ? 'text-gray-500' : 'text-purple-400'}">${card.icon} ${card.name} <span class="text-gray-400">(Lv. ${currentLevel})</span></h3>
-                        <p class="text-sm text-gray-300">Profit/hr: ${Math.floor(currentProfit)} <span class="text-green-400">${isMaxLevel || isLocked ? '' : `-> ${Math.floor(nextProfit)}`}</span></p>
-                        ${isLocked ? `<p class="text-xs text-red-400">${lockMessage}</p>` : ''}
-                    </div>
-                    <button id="buy-card-${cardId}" class="btn-primary py-2 px-4 rounded-lg text-sm font-bold ${isMaxLevel || isLocked ? 'opacity-50 cursor-not-allowed' : ''}" ${isMaxLevel || isLocked ? 'disabled' : ''}>
-                        ${isMaxLevel ? 'Max Level' : (isLocked ? 'Locked' : `Buy (${nextCost} <i class="fas fa-coins"></i>)`)}
-                    </button>
-                `;
-                cardsList.appendChild(cardElement);
+                    const cardElement = document.createElement('div');
+                    cardElement.classList.add('flex', 'items-center', 'justify-between', 'bg-gray-800', 'p-4', 'rounded-lg', 'shadow-md');
+                    if (isLocked) { // Only add opacity-50 if locked
+                        cardElement.classList.add('opacity-50');
+                    }
+                    cardElement.innerHTML = `
+                        <div>
+                            <h3 class="font-semibold text-lg ${isLocked ? 'text-gray-500' : 'text-purple-400'}">${card.icon} ${card.name} <span class="text-gray-400">(Lv. ${currentLevel})</span></h3>
+                            <p class="text-sm text-gray-300">Profit/hr: ${Math.floor(currentProfit)} <span class="text-green-400">${isMaxLevel || isLocked ? '' : `-> ${Math.floor(nextProfit)}`}</span></p>
+                            ${isLocked ? `<p class="text-xs text-red-400">${lockMessage}</p>` : ''}
+                        </div>
+                        <button id="buy-card-${cardId}" class="btn-primary py-2 px-4 rounded-lg text-sm font-bold ${isMaxLevel || isLocked ? 'opacity-50 cursor-not-allowed' : ''}" ${isMaxLevel || isLocked ? 'disabled' : ''}>
+                            ${isMaxLevel ? 'Max Level' : (isLocked ? 'Locked' : `Buy (${nextCost} <i class="fas fa-coins"></i>)`)}
+                        </button>
+                    `;
+                    cardsList.appendChild(cardElement);
 
-                // Add event listener for the buy button
-                if (!isMaxLevel && !isLocked) {
-                    const buyButton = cardElement.querySelector(`#buy-card-${cardId}`);
-                    buyButton.disabled = gameState.coins < nextCost;
-                    buyButton.addEventListener('click', () => purchaseCard(cardId));
+                    // Add event listener for the buy button
+                    if (!isMaxLevel && !isLocked) {
+                        const buyButton = cardElement.querySelector(`#buy-card-${cardId}`);
+                        buyButton.disabled = gameState.coins < nextCost;
+                        buyButton.addEventListener('click', () => purchaseCard(cardId));
+                    }
                 }
             }
 
+
             // Update Settings UI (New)
-            playerLevelDisplay.textContent = gameState.level;
-            playerXpDisplay.textContent = Math.floor(gameState.xp);
+            if (playerLevelDisplay) playerLevelDisplay.textContent = gameState.level;
+            if (playerXpDisplay) playerXpDisplay.textContent = Math.floor(gameState.xp);
             const nextLevelData = LEVEL_CONFIG.find(l => l.level === gameState.level + 1);
             if (nextLevelData) {
-                nextLevelXpDisplay.textContent = nextLevelData.xpNeeded;
-                xpProgressBar.style.width = `${(gameState.xp / nextLevelData.xpNeeded) * 100}%`;
-                nextLevelRewardDisplay.textContent = nextLevelData.reward;
-                levelRewardInfo.classList.remove('hidden');
+                if (nextLevelXpDisplay) nextLevelXpDisplay.textContent = nextLevelData.xpNeeded;
+                if (xpProgressBar) xpProgressBar.style.width = `${(gameState.xp / nextLevelData.xpNeeded) * 100}%`;
+                if (nextLevelRewardDisplay) nextLevelRewardDisplay.textContent = nextLevelData.reward;
+                if (levelRewardInfo) levelRewardInfo.classList.remove('hidden');
             } else {
-                nextLevelXpDisplay.textContent = 'MAX';
-                xpProgressBar.style.width = '100%';
-                levelRewardInfo.classList.add('hidden'); // Hide reward info if max level
+                if (nextLevelXpDisplay) nextLevelXpDisplay.textContent = 'MAX';
+                if (xpProgressBar) xpProgressBar.style.width = '100%';
+                if (levelRewardInfo) levelRewardInfo.classList.add('hidden'); // Hide reward info if max level
             }
 
             // Referral Link
-            if (gameState.referralCode) { // Use gameState.referralCode
-                const currentUrl = window.location.origin + window.location.pathname;
-                referralLinkDisplay.textContent = `${currentUrl}?ref=${gameState.referralCode}`;
-            } else {
-                referralLinkDisplay.textContent = 'Loading...';
+            if (referralLinkDisplay) {
+                if (userId && gameState.referralCode) { // Use gameState.referralCode
+                    const currentUrl = window.location.origin + window.location.pathname;
+                    referralLinkDisplay.textContent = `${currentUrl}?ref=${gameState.referralCode}`;
+                } else {
+                    referralLinkDisplay.textContent = 'Loading...';
+                }
             }
-            referredCountDisplay.textContent = gameState.referredCount;
+            if (referredCountDisplay) referredCountDisplay.textContent = gameState.referredCount;
 
             // Update Redeem Section UI (New)
-            redeemReferralsTask.textContent = `${gameState.referredCount} / ${REDEEM_REQUIREMENTS.referrals} Referrals`;
-            redeemCoinsTask.textContent = `${Math.floor(gameState.xp)} / ${REDEEM_REQUIREMENTS.xp.toLocaleString()} Total Coins Earned (XP)`;
-            redeemCoinsBtn.textContent = `Redeem Coins (Reward: ${REDEEM_REQUIREMENTS.reward.toLocaleString()})`;
+            if (redeemReferralsTask) redeemReferralsTask.textContent = `${gameState.referredCount} / ${REDEEM_REQUIREMENTS.referrals} Referrals`;
+            if (redeemCoinsTask) redeemCoinsTask.textContent = `${Math.floor(gameState.xp)} / ${REDEEM_REQUIREMENTS.xp.toLocaleString()} Total Coins Earned (XP)`;
+            if (redeemCoinsBtn) redeemCoinsBtn.textContent = `Redeem Coins (Reward: ${REDEEM_REQUIREMENTS.reward.toLocaleString()})`;
 
             const canRedeem = gameState.referredCount >= REDEEM_REQUIREMENTS.referrals &&
                              gameState.xp >= REDEEM_REQUIREMENTS.xp &&
                              !gameState.isRedeemed; // Can only redeem once
 
-            redeemCoinsBtn.disabled = !canRedeem;
-            if (canRedeem) {
-                redeemCoinsBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                redeemStatusMessage.classList.add('hidden');
-            } else {
-                redeemCoinsBtn.classList.add('opacity-50', 'cursor-not-allowed');
-                redeemStatusMessage.classList.remove('hidden');
-                if (gameState.isRedeemed) {
-                    redeemStatusMessage.textContent = "Reward already redeemed!";
-                } else if (gameState.referredCount < REDEEM_REQUIREMENTS.referrals && gameState.xp < REDEEM_REQUIREMENTS.xp) {
-                    redeemStatusMessage.textContent = "Tasks not completed yet.";
-                } else if (gameState.referredCount < REDEEM_REQUIREMENTS.referrals) {
-                    redeemStatusMessage.textContent = `Need ${REDEEM_REQUIREMENTS.referrals - gameState.referredCount} more referrals.`;
-                } else if (gameState.xp < REDEEM_REQUIREMENTS.xp) {
-                    redeemStatusMessage.textContent = `Need ${(REDEEM_REQUIREMENTS.xp - gameState.xp).toLocaleString()} more XP.`;
+            if (redeemCoinsBtn) redeemCoinsBtn.disabled = !canRedeem;
+            if (redeemCoinsBtn) {
+                if (canRedeem) {
+                    redeemCoinsBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    if (redeemStatusMessage) redeemStatusMessage.classList.add('hidden');
+                } else {
+                    redeemCoinsBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    if (redeemStatusMessage) {
+                        redeemStatusMessage.classList.remove('hidden');
+                        if (gameState.isRedeemed) {
+                            redeemStatusMessage.textContent = "Reward already redeemed!";
+                        } else if (gameState.referredCount < REDEEM_REQUIREMENTS.referrals && gameState.xp < REDEEM_REQUIREMENTS.xp) {
+                            redeemStatusMessage.textContent = "Tasks not completed yet.";
+                        } else if (gameState.referredCount < REDEEM_REQUIREMENTS.referrals) {
+                            redeemStatusMessage.textContent = `Need ${REDEEM_REQUIREMENTS.referrals - gameState.referredCount} more referrals.`;
+                        } else if (gameState.xp < REDEEM_REQUIREMENTS.xp) {
+                            redeemStatusMessage.textContent = `Need ${(REDEEM_REQUIREMENTS.xp - gameState.xp).toLocaleString()} more XP.`;
+                        }
+                    }
                 }
             }
         }
@@ -1165,7 +1174,7 @@
                             gameState.xp += REFERRAL_BONUS_NEW_USER; // XP for referral bonus
                             gameState.initialReferralBonusClaimed = true;
                             showMessage(`Welcome bonus! +${REFERRAL_BONUS_NEW_USER} coins for joining via a referral!`, 'success');
-                            console.log(`New user bonus applied. Referred by: ${referrerUserId}`);
+                            console.log(`New user bonus applied. Referred by: ${referrerId}`);
                         }
                     } else {
                         showMessage("Invalid referral code entered.", 'error');
