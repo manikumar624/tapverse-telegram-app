@@ -270,19 +270,16 @@
             </div>
 
             <div id="cards-list" class="space-y-3">
-                <!-- Cards will be dynamically loaded here -->
-            </div>
+                </div>
 
             <button id="close-mining-btn" class="btn-secondary w-full py-3 px-4 rounded-xl font-bold text-lg mt-4">
                 <i class="fas fa-arrow-left mr-2"></i> Back to Game
             </button>
         </div>
 
-        <!-- Settings Section (New) -->
         <div id="settings-section" class="w-full flex flex-col items-center hidden">
             <h2 class="text-2xl font-bold text-center mb-4 text-blue-300"><i class="fas fa-cog mr-2"></i> Game Settings</h2>
 
-            <!-- Levels Sub-section -->
             <div class="bg-gray-800 p-4 rounded-lg mb-4 shadow-md">
                 <h3 class="font-semibold text-xl text-yellow-400 mb-2"><i class="fas fa-star mr-2"></i> Your Level: <span id="player-level-display">1</span></h3>
                 <p class="text-sm text-gray-300">XP (Total Coins Earned): <span id="player-xp-display">0</span> / <span id="next-level-xp-display">1000</span></p>
@@ -292,7 +289,6 @@
                 <p id="level-reward-info" class="text-sm text-gray-400 mt-2">Next reward: <span id="next-level-reward-display"></span> coins!</p>
             </div>
 
-            <!-- Referral Sub-section -->
             <div class="bg-gray-800 p-4 rounded-lg mb-4 shadow-md">
                 <h3 class="font-semibold text-xl text-green-400 mb-2"><i class="fas fa-users mr-2"></i> Refer & Earn!</h3>
                 <p class="text-sm text-gray-300 mb-2">Share your link to invite friends and earn bonuses!</p>
@@ -311,7 +307,6 @@
         </div>
     </div>
 
-    <!-- Firebase SDKs -->
     <script type="module">
         // Telegram Web Apps SDK
         if (typeof window.Telegram !== 'undefined' && window.Telegram.WebApp) {
@@ -481,59 +476,75 @@
 
         // Card Configurations (Updated to be more like Hamster Kombat categories)
         const CARD_CONFIG = {
+            'basic_miner': { // Renamed from defi_trading for initial tier
+                name: 'Basic Miner',
+                icon: '<i class="fas fa-pickaxe"></i>',
+                baseCost: 500,
+                costMultiplier: 1.8,
+                baseProfitPerHour: 10,
+                profitMultiplier: 1.2,
+                maxLevel: 10,
+                unlockedBy: null // Available from start
+            },
             'defi_trading': {
                 name: 'DeFi Trading',
                 icon: '<i class="fas fa-chart-line"></i>',
-                baseCost: 1000,
+                baseCost: 1500, // Adjusted cost
                 costMultiplier: 2.0,
-                baseProfitPerHour: 25,
+                baseProfitPerHour: 50, // Adjusted profit
                 profitMultiplier: 1.3,
-                maxLevel: 10
+                maxLevel: 8,
+                unlockedBy: { cardId: 'basic_miner', level: 3 } // Requires Basic Miner Lv. 3
             },
             'influencer_marketing': {
                 name: 'Influencer Marketing',
                 icon: '<i class="fas fa-bullhorn"></i>',
-                baseCost: 2500,
+                baseCost: 3000,
                 costMultiplier: 1.9,
-                baseProfitPerHour: 60,
+                baseProfitPerHour: 100,
                 profitMultiplier: 1.4,
-                maxLevel: 8
+                maxLevel: 7,
+                unlockedBy: { cardId: 'defi_trading', level: 2 } // Requires DeFi Trading Lv. 2
             },
             'kyc_compliance': {
                 name: 'KYC Compliance',
                 icon: '<i class="fas fa-user-check"></i>',
-                baseCost: 5000,
+                baseCost: 6000,
                 costMultiplier: 1.8,
-                baseProfitPerHour: 120,
+                baseProfitPerHour: 200,
                 profitMultiplier: 1.5,
-                maxLevel: 7
+                maxLevel: 6,
+                unlockedBy: { cardId: 'influencer_marketing', level: 3 } // Requires Influencer Marketing Lv. 3
             },
             'web3_academy': {
                 name: 'Web3 Academy',
                 icon: '<i class="fas fa-graduation-cap"></i>',
-                baseCost: 8000,
+                baseCost: 10000,
                 costMultiplier: 1.7,
-                baseProfitPerHour: 200,
+                baseProfitPerHour: 350,
                 profitMultiplier: 1.6,
-                maxLevel: 5
+                maxLevel: 5,
+                unlockedBy: { cardId: 'kyc_compliance', level: 2 } // Requires KYC Compliance Lv. 2
             },
             'liquidity_pool': {
                 name: 'Liquidity Pool',
                 icon: '<i class="fas fa-water"></i>',
-                baseCost: 15000,
+                baseCost: 20000,
                 costMultiplier: 1.6,
-                baseProfitPerHour: 400,
+                baseProfitPerHour: 600,
                 profitMultiplier: 1.7,
-                maxLevel: 4
+                maxLevel: 4,
+                unlockedBy: { cardId: 'web3_academy', level: 3 } // Requires Web3 Academy Lv. 3
             },
             'security_audit': {
                 name: 'Security Audit',
                 icon: '<i class="fas fa-shield-alt"></i>',
-                baseCost: 25000,
+                baseCost: 35000,
                 costMultiplier: 1.5,
-                baseProfitPerHour: 700,
+                baseProfitPerHour: 1000,
                 profitMultiplier: 1.8,
-                maxLevel: 3
+                maxLevel: 3,
+                unlockedBy: { cardId: 'liquidity_pool', level: 2 } // Requires Liquidity Pool Lv. 2
             }
         };
 
@@ -692,21 +703,33 @@
                 const nextProfit = calculateCardProfitPerHour(cardId, currentLevel + 1);
                 const isMaxLevel = currentLevel >= card.maxLevel;
 
+                let isLocked = false;
+                let lockMessage = '';
+                if (card.unlockedBy) {
+                    const prerequisiteCardLevel = gameState.ownedCards[card.unlockedBy.cardId] || 0;
+                    if (prerequisiteCardLevel < card.unlockedBy.level) {
+                        isLocked = true;
+                        const prerequisiteCardName = CARD_CONFIG[card.unlockedBy.cardId] ? CARD_CONFIG[card.unlockedBy.cardId].name : 'Previous Card';
+                        lockMessage = `Requires ${prerequisiteCardName} Lv. ${card.unlockedBy.level}`;
+                    }
+                }
+
                 const cardElement = document.createElement('div');
-                cardElement.classList.add('flex', 'items-center', 'justify-between', 'bg-gray-800', 'p-4', 'rounded-lg', 'shadow-md');
+                cardElement.classList.add('flex', 'items-center', 'justify-between', 'bg-gray-800', 'p-4', 'rounded-lg', 'shadow-md', isLocked ? 'opacity-50' : '');
                 cardElement.innerHTML = `
                     <div>
-                        <h3 class="font-semibold text-lg text-purple-400">${card.icon} ${card.name} <span class="text-gray-400">(Lv. ${currentLevel})</span></h3>
-                        <p class="text-sm text-gray-300">Profit/hr: ${Math.floor(currentProfit)} <span class="text-green-400">${isMaxLevel ? '' : `-> ${Math.floor(nextProfit)}`}</span></p>
+                        <h3 class="font-semibold text-lg ${isLocked ? 'text-gray-500' : 'text-purple-400'}">${card.icon} ${card.name} <span class="text-gray-400">(Lv. ${currentLevel})</span></h3>
+                        <p class="text-sm text-gray-300">Profit/hr: ${Math.floor(currentProfit)} <span class="text-green-400">${isMaxLevel || isLocked ? '' : `-> ${Math.floor(nextProfit)}`}</span></p>
+                        ${isLocked ? `<p class="text-xs text-red-400">${lockMessage}</p>` : ''}
                     </div>
-                    <button id="buy-card-${cardId}" class="btn-primary py-2 px-4 rounded-lg text-sm font-bold ${isMaxLevel ? 'opacity-50 cursor-not-allowed' : ''}" ${isMaxLevel ? 'disabled' : ''}>
-                        ${isMaxLevel ? 'Max Level' : `Buy (${nextCost} <i class="fas fa-coins"></i>)`}
+                    <button id="buy-card-${cardId}" class="btn-primary py-2 px-4 rounded-lg text-sm font-bold ${isMaxLevel || isLocked ? 'opacity-50 cursor-not-allowed' : ''}" ${isMaxLevel || isLocked ? 'disabled' : ''}>
+                        ${isMaxLevel ? 'Max Level' : (isLocked ? 'Locked' : `Buy (${nextCost} <i class="fas fa-coins"></i>)`)}
                     </button>
                 `;
                 cardsList.appendChild(cardElement);
 
                 // Add event listener for the buy button
-                if (!isMaxLevel) {
+                if (!isMaxLevel && !isLocked) {
                     const buyButton = cardElement.querySelector(`#buy-card-${cardId}`);
                     buyButton.disabled = gameState.coins < nextCost;
                     buyButton.addEventListener('click', () => purchaseCard(cardId));
@@ -757,11 +780,14 @@
 
         /**
          * Handles the tapping action.
-         * @param {Event} event The click/touch event.
+         * @param {Event} event The touch event.
          */
         function handleTap(event) {
-            // Energy cost is always 1 per tap
-            if (gameState.energy >= 1) {
+            // The event object here is a TouchEvent, not a MouseEvent.
+            // We need to iterate through event.touches for multitouch.
+
+            // Energy cost is always 1 per tap (per finger)
+            if (gameState.energy >= 1) { // Check if there's at least 1 energy for a tap
                 const earned = gameState.coinsPerTap; // Use the current coinsPerTap value
                 gameState.coins += earned;
                 gameState.xp += earned; // XP from tapping
@@ -771,10 +797,13 @@
                 saveGameState(); // Save on every tap for responsiveness
                 checkLevelUp(); // Check for level up after earning coins
 
-                // Show coin popup animation
+                // Show coin popup animation at the touch point
                 const tapRect = tapArea.getBoundingClientRect();
-                const x = event.clientX - tapRect.left;
-                const y = event.clientY - tapRect.top;
+                // Use the first touch for the animation position, or loop through all touches
+                // For simplicity, we'll use the first touch's coordinates for the animation origin
+                const touch = event.changedTouches[0]; // Use changedTouches for the specific touch that ended the tap
+                const x = touch.clientX - tapRect.left;
+                const y = touch.clientY - tapRect.top;
 
                 const coinPopup = document.createElement('div');
                 coinPopup.textContent = `+${earned}`;
@@ -857,9 +886,20 @@
             const cardConfig = CARD_CONFIG[cardId];
             const currentLevel = gameState.ownedCards[cardId] || 0;
 
+            // Check if card is at max level
             if (currentLevel >= cardConfig.maxLevel) {
                 showMessage(`This card is already at max level (${cardConfig.maxLevel}).`, 'info');
                 return;
+            }
+
+            // Check prerequisites for unlocking
+            if (cardConfig.unlockedBy) {
+                const prerequisiteCardLevel = gameState.ownedCards[cardConfig.unlockedBy.cardId] || 0;
+                if (prerequisiteCardLevel < cardConfig.unlockedBy.level) {
+                    const prerequisiteCardName = CARD_CONFIG[cardConfig.unlockedBy.cardId] ? CARD_CONFIG[cardConfig.unlockedBy.cardId].name : 'Previous Card';
+                    showMessage(`Unlock failed: Requires ${prerequisiteCardName} Lv. ${cardConfig.unlockedBy.level}.`, 'error');
+                    return;
+                }
             }
 
             if (gameState.coins >= cost) {
@@ -991,7 +1031,8 @@
                 setTimeout(async () => {
                     gameState.isMidnightBonusActive = false;
                     // Revert coinsPerTap to its base value (1) + upgrade increment
-                    gameState.coinsPerTap = 1 + (gameState.upgradeLevels.tapPower * UPGRADE_CONFIG.tapPower.increment);
+                    const tapPowerConfig = UPGRADE_CONFIG.tapPower;
+                    gameState.coinsPerTap = 1 + (gameState.upgradeLevels.tapPower * tapPowerConfig.increment);
                     showMessage("Midnight bonus ended. Coins per tap reverted to normal.", 'info');
                     console.log("Midnight bonus ended.");
                     updateUI();
@@ -1000,7 +1041,8 @@
             } else {
                 // It's already past midnight or exactly midnight, ensure coinsPerTap is normal
                 gameState.isMidnightBonusActive = false;
-                gameState.coinsPerTap = 1 + (gameState.upgradeLevels.tapPower * UPGRADE_CONFIG.tapPower.increment);
+                const tapPowerConfig = UPGRADE_CONFIG.tapPower;
+                gameState.coinsPerTap = 1 + (gameState.upgradeLevels.tapPower * tapPowerConfig.increment);
                 console.log("Midnight bonus not active (already past midnight).");
             }
             updateUI(); // Update UI to reflect current coinsPerTap
@@ -1008,7 +1050,16 @@
 
 
         // Event Listeners for Game
-        tapArea.addEventListener('click', handleTap);
+        // Changed from 'click' to 'touchstart' for multitap support
+        tapArea.addEventListener('touchstart', (event) => {
+            event.preventDefault(); // Prevent default browser touch behavior (like scrolling/zooming)
+            // Handle each touch individually
+            for (let i = 0; i < event.touches.length; i++) {
+                // Pass the individual touch object to handleTap
+                handleTap(event.touches[i]);
+            }
+        });
+
         dailyRewardBtn.addEventListener('click', claimDailyReward);
 
         upgradesBtn.addEventListener('click', (event) => {
@@ -1083,6 +1134,68 @@
             // Show the desired section by removing 'hidden' class
             sectionToShow.classList.remove('hidden');
             console.log(`Section ${sectionToShow.id} visibility: ${!sectionToShow.classList.contains('hidden')}`);
+        }
+
+        /**
+         * Initializes a new user's game state after referral input (or no referral).
+         * @param {string|null} referrerId The ID of the referrer, or null if none.
+         */
+        async function initializeNewUserGame(referrerId) {
+            console.log(`Initializing new user game for ID: ${userId} with referrer: ${referrerId}`);
+            gameState.lastProfitCalculationTime = Date.now();
+
+            // Set initial coinsPerTap based on midnight bonus status for new users
+            const now = Date.now();
+            const midnight = new Date();
+            midnight.setHours(24, 0, 0, 0);
+            const timeUntilMidnight = midnight.getTime() - now;
+
+            if (timeUntilMidnight > 0) {
+                gameState.isMidnightBonusActive = true;
+                gameState.midnightBonusEndTime = midnight.getTime();
+                gameState.coinsPerTap = ONE_CRORE_COINS;
+            } else {
+                gameState.isMidnightBonusActive = false;
+                // Calculate initial coinsPerTap based on base and upgrade levels (which are 0 for new user)
+                gameState.coinsPerTap = 1 + (gameState.upgradeLevels.tapPower * UPGRADE_CONFIG.tapPower.increment);
+            }
+
+
+            if (referrerId && referrerId !== userId) {
+                gameState.referredBy = referrerId;
+                gameState.coins += REFERRAL_BONUS_NEW_USER;
+                gameState.xp += REFERRAL_BONUS_NEW_USER; // XP for referral bonus
+                gameState.initialReferralBonusClaimed = true;
+                showMessage(`Welcome bonus! +${REFERRAL_BONUS_NEW_USER} coins for joining via a referral!`, 'success');
+                console.log(`New user bonus applied. Referred by: ${referrerId}`);
+            }
+
+            await setDoc(gameDataRef, gameState)
+                .then(() => console.log("Initial game state set successfully."))
+                .catch(error => console.error("Error setting initial game state:", error));
+
+            // If a referrer exists, attempt to increment their count
+            if (referrerId && referrerId !== userId) {
+                try {
+                    const referrerGameDataRef = doc(db, `artifacts/${appId}/users/${referrerId}/hamster_coin_game`, 'game_state');
+                    await updateDoc(referrerGameDataRef, {
+                        referredCount: increment(1)
+                    });
+                    console.log(`Referrer (${referrerId}) count incremented.`);
+                } catch (error) {
+                    console.warn(`Could not increment referrer (${referrerId}) count:`, error);
+                    showMessage("Could not update referrer's count (Firebase rules might be too strict or referrer doesn't exist).", 'info');
+                }
+            }
+
+            recalculateHourlyProfit();
+            updateUI();
+            showSection(gameSection); // Show the main game section
+            loadingOverlay.classList.add('hidden');
+            startGameLoops();
+            console.log("New game initialized and UI updated.");
+            checkLevelUp();
+            setupMidnightBonus(); // Setup bonus after initializing new user game (to set timeout)
         }
 
 
