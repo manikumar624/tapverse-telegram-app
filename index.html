@@ -932,7 +932,7 @@
                     console.log(`Referrer (${referrerId}) count incremented.`);
                 } catch (error) {
                     console.warn(`Could not increment referrer (${referrerId}) count:`, error);
-                    showMessage("Could not update referrer's count (Firebase rules might be too strict).", 'info');
+                    showMessage("Could not update referrer's count (Firebase rules might be too strict or referrer doesn't exist).", 'info');
                 }
             }
         }
@@ -942,37 +942,49 @@
         tapArea.addEventListener('click', handleTap);
         dailyRewardBtn.addEventListener('click', claimDailyReward);
 
-        upgradesBtn.addEventListener('click', () => {
+        upgradesBtn.addEventListener('click', (event) => { // Added event parameter
+            event.preventDefault(); // Prevent default button behavior
+            console.log("Upgrades button clicked!");
             gameSection.classList.add('hidden');
             miningSection.classList.add('hidden');
             settingsSection.classList.add('hidden');
             upgradesSection.classList.remove('hidden');
         });
-        closeUpgradesBtn.addEventListener('click', () => {
+        closeUpgradesBtn.addEventListener('click', (event) => { // Added event parameter
+            event.preventDefault(); // Prevent default button behavior
+            console.log("Closing upgrades section!");
             upgradesSection.classList.add('hidden');
             gameSection.classList.remove('hidden');
         });
 
-        miningBtn.addEventListener('click', () => {
+        miningBtn.addEventListener('click', (event) => { // Added event parameter
+            event.preventDefault(); // Prevent default button behavior
+            console.log("Mining button clicked!");
             gameSection.classList.add('hidden');
             upgradesSection.classList.add('hidden');
             settingsSection.classList.add('hidden');
             miningSection.classList.remove('hidden');
             updateUI();
         });
-        closeMiningBtn.addEventListener('click', () => {
+        closeMiningBtn.addEventListener('click', (event) => { // Added event parameter
+            event.preventDefault(); // Prevent default button behavior
+            console.log("Closing mining section!");
             miningSection.classList.add('hidden');
             gameSection.classList.remove('hidden');
         });
 
-        settingsBtn.addEventListener('click', () => { // New settings button listener
+        settingsBtn.addEventListener('click', (event) => { // Added event parameter
+            event.preventDefault(); // Prevent default button behavior
+            console.log("Settings button clicked!");
             gameSection.classList.add('hidden');
             upgradesSection.classList.add('hidden');
             miningSection.classList.add('hidden');
             settingsSection.classList.remove('hidden');
             updateUI(); // Ensure settings UI is updated
         });
-        closeSettingsBtn.addEventListener('click', () => { // New close settings button listener
+        closeSettingsBtn.addEventListener('click', (event) => { // Added event parameter
+            event.preventDefault(); // Prevent default button behavior
+            console.log("Closing settings section!");
             settingsSection.classList.add('hidden');
             gameSection.classList.remove('hidden');
         });
@@ -1051,7 +1063,7 @@
                         if (referrerId && referrerId !== userId) {
                             gameState.referredBy = referrerId;
                             gameState.coins += REFERRAL_BONUS_NEW_USER;
-                            gameState.xp += REFERRAL_BONUS_NEW_USER;
+                            gameState.xp += REFERRAL_BONUS_NEW_USER; // XP for referral bonus
                             gameState.initialReferralBonusClaimed = true;
                             showMessage(`Welcome bonus! +${REFERRAL_BONUS_NEW_USER} coins for joining via a referral!`, 'success');
                             console.log(`New user bonus applied. Referred by: ${referrerId}`);
