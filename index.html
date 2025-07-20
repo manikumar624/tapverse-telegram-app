@@ -437,7 +437,7 @@
             energy: 1000,
             maxEnergy: 1000,
             energyRegenRate: 1, // energy per second
-            coinsPerTap: 10000000, // Set to 1 crore for testing
+            coinsPerTap: 1, // Base value, will be overridden by bonus or upgrades
             lastDailyRewardClaim: 0, // Unix timestamp in milliseconds
             upgradeLevels: {
                 tapPower: 0,
@@ -453,8 +453,12 @@
             xp: 0, // Experience points (total coins earned)
             referredBy: null, // userId of the referrer, if any
             referredCount: 0, // Number of users this player has successfully referred
-            initialReferralBonusClaimed: false // To ensure a user only gets the bonus once
+            initialReferralBonusClaimed: false, // To ensure a user only gets the bonus once
+            isMidnightBonusActive: false, // Tracks if the 1 crore bonus is active
+            midnightBonusEndTime: 0 // Timestamp when the bonus ends
         };
+
+        const ONE_CRORE_COINS = 10000000; // Define 1 crore for clarity
 
         // Upgrade Costs and Increments (can be adjusted for game balance)
         const UPGRADE_CONFIG = {
@@ -756,11 +760,12 @@
          * @param {Event} event The click/touch event.
          */
         function handleTap(event) {
-            if (gameState.energy >= gameState.coinsPerTap) {
-                const earned = gameState.coinsPerTap;
+            // Energy cost is always 1 per tap
+            if (gameState.energy >= 1) {
+                const earned = gameState.coinsPerTap; // Use the current coinsPerTap value
                 gameState.coins += earned;
                 gameState.xp += earned; // XP from tapping
-                gameState.energy -= earned; // Energy cost for tap is coinsPerTap
+                gameState.energy -= 1; // Energy cost for tap is always 1
 
                 updateUI();
                 saveGameState(); // Save on every tap for responsiveness
@@ -824,8 +829,9 @@
                 gameState.upgradeLevels[upgradeType]++;
 
                 if (upgradeType === 'tapPower') {
-                    // Removed: gameState.coinsPerTap += config.increment;
-                    // Tap Power upgrade now only increases level, not coins per tap
+                    // Tap Power upgrade now only increases level, not coins per tap directly
+                    // It will affect coinsPerTap only after the midnight bonus ends.
+                    // The baseCoinsPerTap is implicitly 1 + (level * increment)
                 } else if (upgradeType === 'energyCapacity') {
                     gameState.maxEnergy += config.increment;
                     // Also fill energy to new max when capacity increases
@@ -964,40 +970,76 @@
             }
         }
 
+        /**
+         * Sets up the midnight bonus for coins per tap.
+         */
+        function setupMidnightBonus() {
+            const now = Date.now();
+            const midnight = new Date();
+            midnight.setHours(24, 0, 0, 0); // Sets to 00:00 of the next day
+
+            const timeUntilMidnight = midnight.getTime() - now;
+
+            // If bonus is already active from loaded state, or it's before midnight
+            if (gameState.isMidnightBonusActive || timeUntilMidnight > 0) {
+                gameState.isMidnightBonusActive = true;
+                gameState.midnightBonusEndTime = midnight.getTime();
+                gameState.coinsPerTap = ONE_CRORE_COINS; // Set to 1 crore
+                showMessage("Midnight bonus active! 1 Crore coins per tap!", 'success');
+                console.log(`Midnight bonus active. Ends in ${timeUntilMidnight / 1000} seconds.`);
+
+                setTimeout(async () => {
+                    gameState.isMidnightBonusActive = false;
+                    // Revert coinsPerTap to its base value (1) + upgrade increment
+                    gameState.coinsPerTap = 1 + (gameState.upgradeLevels.tapPower * UPGRADE_CONFIG.tapPower.increment);
+                    showMessage("Midnight bonus ended. Coins per tap reverted to normal.", 'info');
+                    console.log("Midnight bonus ended.");
+                    updateUI();
+                    await saveGameState(); // Save state after bonus ends
+                }, timeUntilMidnight);
+            } else {
+                // It's already past midnight or exactly midnight, ensure coinsPerTap is normal
+                gameState.isMidnightBonusActive = false;
+                gameState.coinsPerTap = 1 + (gameState.upgradeLevels.tapPower * UPGRADE_CONFIG.tapPower.increment);
+                console.log("Midnight bonus not active (already past midnight).");
+            }
+            updateUI(); // Update UI to reflect current coinsPerTap
+        }
+
 
         // Event Listeners for Game
         tapArea.addEventListener('click', handleTap);
         dailyRewardBtn.addEventListener('click', claimDailyReward);
 
-        upgradesBtn.addEventListener('click', (event) => { // Added event parameter
-            event.preventDefault(); // Prevent default button behavior
+        upgradesBtn.addEventListener('click', (event) => {
+            event.preventDefault();
             console.log("Upgrades button clicked!");
             showSection(upgradesSection);
         });
-        closeUpgradesBtn.addEventListener('click', (event) => { // Added event parameter
-            event.preventDefault(); // Prevent default button behavior
+        closeUpgradesBtn.addEventListener('click', (event) => {
+            event.preventDefault();
             console.log("Closing upgrades section!");
             showSection(gameSection);
         });
 
-        miningBtn.addEventListener('click', (event) => { // Added event parameter
-            event.preventDefault(); // Prevent default button behavior
+        miningBtn.addEventListener('click', (event) => {
+            event.preventDefault();
             console.log("Mining button clicked!");
             showSection(miningSection);
         });
-        closeMiningBtn.addEventListener('click', (event) => { // Added event parameter
-            event.preventDefault(); // Prevent default button behavior
+        closeMiningBtn.addEventListener('click', (event) => {
+            event.preventDefault();
             console.log("Closing mining section!");
             showSection(gameSection);
         });
 
-        settingsBtn.addEventListener('click', (event) => { // Added event parameter
-            event.preventDefault(); // Prevent default button behavior
+        settingsBtn.addEventListener('click', (event) => {
+            event.preventDefault();
             console.log("Settings button clicked!");
             showSection(settingsSection);
         });
-        closeSettingsBtn.addEventListener('click', (event) => { // Added event parameter
-            event.preventDefault(); // Prevent default button behavior
+        closeSettingsBtn.addEventListener('click', (event) => {
+            event.preventDefault();
             console.log("Closing settings section!");
             showSection(gameSection);
         });
@@ -1012,7 +1054,6 @@
         copyReferralLinkBtn.addEventListener('click', () => {
             const referralLink = referralLinkDisplay.textContent;
             if (referralLink && referralLink !== 'Loading referral link...') {
-                // Use document.execCommand('copy') for better iframe compatibility
                 const tempInput = document.createElement('textarea');
                 tempInput.value = referralLink;
                 document.body.appendChild(tempInput);
@@ -1042,50 +1083,6 @@
             // Show the desired section by removing 'hidden' class
             sectionToShow.classList.remove('hidden');
             console.log(`Section ${sectionToShow.id} visibility: ${!sectionToShow.classList.contains('hidden')}`);
-        }
-
-        /**
-         * Initializes a new user's game state after referral input (or no referral).
-         * @param {string|null} referrerId The ID of the referrer, or null if none.
-         */
-        async function initializeNewUserGame(referrerId) {
-            console.log(`Initializing new user game for ID: ${userId} with referrer: ${referrerId}`);
-            gameState.lastProfitCalculationTime = Date.now();
-
-            if (referrerId && referrerId !== userId) {
-                gameState.referredBy = referrerId;
-                gameState.coins += REFERRAL_BONUS_NEW_USER;
-                gameState.xp += REFERRAL_BONUS_NEW_USER; // XP for referral bonus
-                gameState.initialReferralBonusClaimed = true;
-                showMessage(`Welcome bonus! +${REFERRAL_BONUS_NEW_USER} coins for joining via a referral!`, 'success');
-                console.log(`New user bonus applied. Referred by: ${referrerId}`);
-            }
-
-            await setDoc(gameDataRef, gameState)
-                .then(() => console.log("Initial game state set successfully."))
-                .catch(error => console.error("Error setting initial game state:", error));
-
-            // If a referrer exists, attempt to increment their count
-            if (referrerId && referrerId !== userId) {
-                try {
-                    const referrerGameDataRef = doc(db, `artifacts/${appId}/users/${referrerId}/hamster_coin_game`, 'game_state');
-                    await updateDoc(referrerGameDataRef, {
-                        referredCount: increment(1)
-                    });
-                    console.log(`Referrer (${referrerId}) count incremented.`);
-                } catch (error) {
-                    console.warn(`Could not increment referrer (${referrerId}) count:`, error);
-                    showMessage("Could not update referrer's count (Firebase rules might be too strict or referrer doesn't exist).", 'info');
-                }
-            }
-
-            recalculateHourlyProfit();
-            updateUI();
-            showSection(gameSection); // Show the main game section
-            loadingOverlay.classList.add('hidden');
-            startGameLoops();
-            console.log("New game initialized and UI updated.");
-            checkLevelUp();
         }
 
 
@@ -1135,6 +1132,7 @@
                         startGameLoops(); // Start game loops only after data is ready
                         console.log("Game loaded and UI updated.");
                         checkLevelUp(); // Check level up on game load
+                        setupMidnightBonus(); // Setup bonus after loading game state
 
                     } else {
                         // New user: Show referral input screen
