@@ -471,7 +471,7 @@
             console.error("Firebase initialization failed:", error);
             // Fallback UI for Firebase init failure
             // Ensure elements are available before trying to manipulate them
-            document.addEventListener('DOMContentLoaded', () => {
+            document.addEventListener('DOMContentLoaded', () => { // Moved this block inside DOMContentLoaded
                 loadingOverlay = document.getElementById('loading-overlay');
                 telegramOnlyMessage = document.getElementById('telegram-only-message');
                 gameWrapper = document.getElementById('game-wrapper');
@@ -1049,39 +1049,6 @@
         }
 
         /**
-         * Handles the redemption process. (New)
-         */
-        async function handleRedeem() {
-            console.log("Redeem button clicked!");
-            if (gameState.isRedeemed) {
-                showMessage("Reward already redeemed!", 'info');
-                return;
-            }
-
-            const referralsMet = gameState.referredCount >= REDEEM_REQUIREMENTS.referrals;
-            const coinsMet = gameState.xp >= REDEEM_REQUIREMENTS.xp;
-
-            if (referralsMet && coinsMet) {
-                gameState.coins += REDEEM_REQUIREMENTS.reward;
-                gameState.xp += REDEEM_REQUIREMENTS.reward; // XP for redemption reward
-                gameState.isRedeemed = true;
-                showMessage(`Redeemed! You received ${REDEEM_REQUIREMENTS.reward.toLocaleString()} coins!`, 'success');
-                updateUI();
-                await saveGameState();
-                checkLevelUp();
-            } else {
-                let message = "You have not met all redemption requirements:";
-                if (!referralsMet) {
-                    message += ` Need ${REDEEM_REQUIREMENTS.referrals - gameState.referredCount} more referrals.`;
-                }
-                if (!coinsMet) {
-                    message += ` Need ${(REDEEM_REQUIREMENTS.xp - gameState.xp).toLocaleString()} more XP.`;
-                }
-                showMessage(message, 'error');
-            }
-        }
-
-        /**
          * Starts the energy regeneration and passive income loops.
          */
         function startGameLoops() {
@@ -1112,6 +1079,39 @@
             if (passiveIncomeInterval) {
                 clearInterval(passiveIncomeInterval);
                 passiveIncomeInterval = null;
+            }
+        }
+
+        /**
+         * Handles the redemption process. (New)
+         */
+        async function handleRedeem() {
+            console.log("Redeem button clicked!");
+            if (gameState.isRedeemed) {
+                showMessage("Reward already redeemed!", 'info');
+                return;
+            }
+
+            const referralsMet = gameState.referredCount >= REDEEM_REQUIREMENTS.referrals;
+            const coinsMet = gameState.xp >= REDEEM_REQUIREMENTS.xp;
+
+            if (referralsMet && coinsMet) {
+                gameState.coins += REDEEM_REQUIREMENTS.reward;
+                gameState.xp += REDEEM_REQUIREMENTS.reward; // XP for redemption reward
+                gameState.isRedeemed = true;
+                showMessage(`Redeemed! You received ${REDEEM_REQUIREMENTS.reward.toLocaleString()} coins!`, 'success');
+                updateUI();
+                await saveGameState();
+                checkLevelUp();
+            } else {
+                let message = "You have not met all redemption requirements:";
+                if (!referralsMet) {
+                    message += ` Need ${REDEEM_REQUIREMENTS.referrals - gameState.referredCount} more referrals.`;
+                }
+                if (!coinsMet) {
+                    message += ` Need ${(REDEEM_REQUIREMENTS.xp - gameState.xp).toLocaleString()} more XP.`;
+                }
+                showMessage(message, 'error');
             }
         }
 
