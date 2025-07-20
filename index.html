@@ -824,7 +824,8 @@
                 gameState.upgradeLevels[upgradeType]++;
 
                 if (upgradeType === 'tapPower') {
-                    gameState.coinsPerTap += config.increment;
+                    // Removed: gameState.coinsPerTap += config.increment;
+                    // Tap Power upgrade now only increases level, not coins per tap
                 } else if (upgradeType === 'energyCapacity') {
                     gameState.maxEnergy += config.increment;
                     // Also fill energy to new max when capacity increases
