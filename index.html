@@ -268,18 +268,68 @@
         import { getAuth } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // UI Elements (Moved to top for early access)
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const telegramOnlyMessage = document.getElementById('telegram-only-message');
+        const gameSection = document.getElementById('game-section');
+        const userIdDisplay = document.getElementById('user-id-display');
+        const coinsDisplay = document.getElementById('coins-display');
+        const energyDisplay = document.getElementById('energy-display');
+        const energyBarFill = document.getElementById('energy-bar-fill');
+        const tapArea = document.getElementById('tap-area');
+        const dailyRewardBtn = document.getElementById('daily-reward-btn');
+        const upgradesBtn = document.getElementById('upgrades-btn');
+        const miningBtn = document.getElementById('mining-btn');
+        const upgradesSection = document.getElementById('upgrades-section');
+        const miningSection = document.getElementById('mining-section');
+        const closeUpgradesBtn = document.getElementById('close-upgrades-btn');
+        const closeMiningBtn = document.getElementById('close-mining-btn');
+        const messageBox = document.getElementById('message-box');
+        const messageText = document.getElementById('message-text');
+
+        // Upgrade UI elements
+        const tapPowerLevel = document.getElementById('tap-power-level');
+        const tapPowerIncrease = document.getElementById('tap-power-increase');
+        const tapPowerCost = document.getElementById('tap-power-cost');
+        const energyCapacityLevel = document.getElementById('energy-capacity-level');
+        const energyCapacityIncrease = document.getElementById('energy-capacity-increase');
+        const energyCapacityCost = document.getElementById('energy-capacity-cost');
+        const energyRegenLevel = document.getElementById('energy-regen-level');
+        const energyRegenIncrease = document.getElementById('energy-regen-increase');
+        const energyRegenCost = document.getElementById('energy-regen-cost');
+        const upgradeTapPowerBtn = document.getElementById('upgrade-tap-power');
+        const upgradeEnergyCapacityBtn = document.getElementById('upgrade-energy-capacity');
+        const upgradeEnergyRegenBtn = document.getElementById('upgrade-energy-regen');
+
+        // Mining UI elements
+        const hourlyProfitDisplay = document.getElementById('hourly-profit-display');
+        const accumulatedProfitDisplay = document.getElementById('accumulated-profit-display');
+        const claimProfitBtn = document.getElementById('claim-profit-btn');
+        const cardsList = document.getElementById('cards-list');
+
+
         // Global variables for Firebase config and app ID
-        // Ensure that __app_id and __firebase_config are always string values for initialization.
         const appId = typeof __app_id !== 'undefined' ? String(__app_id) : 'default-hamster-app-id';
-        // Safely parse firebaseConfig, defaulting to an empty object if __firebase_config is not a valid JSON string
         let firebaseConfig = {};
         try {
             firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? String(__firebase_config) : '{}');
             console.log("Firebase Config parsed:", firebaseConfig);
+            // Explicitly check for projectId after parsing
+            if (!firebaseConfig.projectId) {
+                throw new Error("Firebase 'projectId' is missing in the configuration. Please ensure __firebase_config environment variable is correctly set.");
+            }
         } catch (e) {
-            console.error("Error parsing __firebase_config:", e);
-            // Fallback to empty config if parsing fails
-            firebaseConfig = {};
+            console.error("Error processing __firebase_config:", e);
+            loadingOverlay.classList.add('hidden');
+            gameSection.classList.add('hidden');
+            telegramOnlyMessage.classList.remove('hidden');
+            document.getElementById('telegram-only-message').innerHTML = `
+                <i class="fas fa-exclamation-triangle text-6xl text-red-400 mb-4"></i>
+                <h2 class="text-2xl font-bold text-red-400 mb-4">Configuration Error</h2>
+                <p class="text-lg text-gray-300">Firebase configuration is missing or invalid. Please check your Vercel environment variables (__firebase_config).</p>
+                <p class="text-md text-gray-400 mt-2">Error: ${e.message}</p>
+            `;
+            throw e; // Stop further execution
         }
 
 
@@ -295,14 +345,13 @@
             console.log("Firebase initialized successfully.");
         } catch (error) {
             console.error("Firebase initialization failed:", error);
-            showMessage("Failed to initialize game services. Please try again later.", 'error');
-            // Hide loading and show error message if Firebase init fails
             loadingOverlay.classList.add('hidden');
-            telegramOnlyMessage.classList.remove('hidden'); // Or a more specific error message
+            gameSection.classList.add('hidden');
+            telegramOnlyMessage.classList.remove('hidden');
             document.getElementById('telegram-only-message').innerHTML = `
                 <i class="fas fa-exclamation-triangle text-6xl text-red-400 mb-4"></i>
                 <h2 class="text-2xl font-bold text-red-400 mb-4">Game Error</h2>
-                <p class="text-lg text-gray-300">Failed to load game services. Please contact support.</p>
+                <p class="text-lg text-gray-300">Failed to initialize game services. Please contact support.</p>
                 <p class="text-md text-gray-400 mt-2">Error: ${error.message}</p>
             `;
             throw error; // Stop further execution
@@ -332,47 +381,6 @@
             lastProfitCalculationTime: Date.now(), // Timestamp for passive income calculation
             accumulatedProfit: 0
         };
-
-        // UI Elements
-        const loadingOverlay = document.getElementById('loading-overlay');
-        const telegramOnlyMessage = document.getElementById('telegram-only-message'); // New
-        const gameSection = document.getElementById('game-section');
-
-        const userIdDisplay = document.getElementById('user-id-display');
-        const coinsDisplay = document.getElementById('coins-display');
-        const energyDisplay = document.getElementById('energy-display');
-        const energyBarFill = document.getElementById('energy-bar-fill');
-        const tapArea = document.getElementById('tap-area');
-        const dailyRewardBtn = document.getElementById('daily-reward-btn');
-        const upgradesBtn = document.getElementById('upgrades-btn');
-        const miningBtn = document.getElementById('mining-btn');
-        const upgradesSection = document.getElementById('upgrades-section');
-        const miningSection = document.getElementById('mining-section');
-        const closeUpgradesBtn = document.getElementById('close-upgrades-btn');
-        const closeMiningBtn = document.getElementById('close-mining-btn');
-        const messageBox = document.getElementById('message-box');
-        const messageText = document.getElementById('message-text');
-
-        // Upgrade UI elements
-        const tapPowerLevel = document.getElementById('tap-power-level');
-        const tapPowerIncrease = document.getElementById('tap-power-increase');
-        const tapPowerCost = document.getElementById('tap-power-cost');
-        const energyCapacityLevel = document.getElementById('energy-capacity-level');
-        const energyCapacityIncrease = document.getElementById('energy-capacity-increase');
-        const energyCapacityCost = document.getElementById('energy-capacity-cost');
-        const energyRegenLevel = document.getElementById('energy-regen-level');
-        const energyRegenIncrease = document.getElementById('energy-regen-increase');
-        const energyRegenCost = document.getElementById('energy-regen-cost');
-
-        const upgradeTapPowerBtn = document.getElementById('upgrade-tap-power');
-        const upgradeEnergyCapacityBtn = document.getElementById('upgrade-energy-capacity');
-        const upgradeEnergyRegenBtn = document.getElementById('upgrade-energy-regen');
-
-        // Mining UI elements
-        const hourlyProfitDisplay = document.getElementById('hourly-profit-display');
-        const accumulatedProfitDisplay = document.getElementById('accumulated-profit-display');
-        const claimProfitBtn = document.getElementById('claim-profit-btn');
-        const cardsList = document.getElementById('cards-list');
 
         // Upgrade Costs and Increments (can be adjusted for game balance)
         const UPGRADE_CONFIG = {
@@ -457,6 +465,12 @@
          * @param {string} type The type of message (e.g., 'success', 'error', 'info').
          */
         function showMessage(message, type = 'info') {
+            // Ensure messageBox and messageText are available
+            if (!messageBox || !messageText) {
+                console.error("showMessage called before messageBox/messageText are initialized:", message);
+                return;
+            }
+
             messageText.textContent = message;
             messageBox.className = 'fixed top-4 left-1/2 -translate-x-1/2 px-6 py-3 rounded-lg shadow-lg z-50 message-box'; // Reset animation
             messageBox.classList.remove('hidden');
@@ -812,7 +826,7 @@
                         };
                         console.log("Game state loaded/updated from Firestore:", gameState);
 
-                        const now = Date.now();
+                        const now = Date.2025(); // Changed from Date.now() to Date.2025()
                         const timeElapsedOffline = now - (gameState.lastProfitCalculationTime || now);
                         if (timeElapsedOffline > 0 && gameState.hourlyProfit > 0) {
                             const profitPerMs = gameState.hourlyProfit / (60 * 60 * 1000);
