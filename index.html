@@ -780,12 +780,10 @@
 
         /**
          * Handles the tapping action.
-         * @param {Event} event The touch event.
+         * @param {Event} touch The individual touch object.
          */
-        function handleTap(event) {
-            // The event object here is a TouchEvent, not a MouseEvent.
-            // We need to iterate through event.touches for multitouch.
-
+        function handleTap(touch) { // Changed parameter from event to touch
+            console.log("Tap processed!"); // Log for each individual tap
             // Energy cost is always 1 per tap (per finger)
             if (gameState.energy >= 1) { // Check if there's at least 1 energy for a tap
                 const earned = gameState.coinsPerTap; // Use the current coinsPerTap value
@@ -799,11 +797,8 @@
 
                 // Show coin popup animation at the touch point
                 const tapRect = tapArea.getBoundingClientRect();
-                // Use the first touch for the animation position, or loop through all touches
-                // For simplicity, we'll use the first touch's coordinates for the animation origin
-                const touch = event.changedTouches[0]; // Use changedTouches for the specific touch that ended the tap
-                const x = touch.clientX - tapRect.left;
-                const y = touch.clientY - tapRect.top;
+                const x = touch.clientX - tapRect.left; // Use touch.clientX
+                const y = touch.clientY - tapRect.top; // Use touch.clientY
 
                 const coinPopup = document.createElement('div');
                 coinPopup.textContent = `+${earned}`;
