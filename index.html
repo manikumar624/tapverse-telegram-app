@@ -119,6 +119,42 @@
             0% { opacity: 1; transform: translateY(0); }
             100% { opacity: 0; transform: translateY(-50px); }
         }
+
+        /* Fixed bottom navigation bar */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: #1a202c; /* Darker background for nav */
+            border-top: 1px solid #2d3748; /* Subtle border */
+            z-index: 40; /* Above game content but below messages */
+            display: flex;
+            justify-content: space-around;
+            padding: 0.5rem 0;
+            box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.3);
+        }
+        .nav-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 0.5rem;
+            color: #a0aec0; /* Lighter gray for inactive */
+            font-size: 0.75rem;
+            font-weight: 600;
+            transition: color 0.2s ease;
+        }
+        .nav-btn:hover {
+            color: #e2e8f0; /* White on hover */
+        }
+        .nav-btn.active {
+            color: #4299E1; /* Blue for active */
+        }
+        .nav-btn i {
+            font-size: 1.5rem;
+            margin-bottom: 0.25rem;
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col items-center p-4">
@@ -159,7 +195,7 @@
     </div>
 
     <!-- Main Game Container (All sections are now children of this wrapper) -->
-    <div id="game-wrapper" class="w-full max-w-md bg-gray-800 rounded-xl shadow-2xl p-6 relative overflow-hidden" style="min-height: 500px;">
+    <div id="game-wrapper" class="w-full max-w-md bg-gray-800 rounded-xl shadow-2xl p-6 relative overflow-hidden" style="min-height: 500px; padding-bottom: 80px;"> <!-- Added padding-bottom for nav bar -->
         <!-- User ID Display (Always visible) -->
         <div class="absolute top-4 left-4 text-xs text-gray-400 z-10">
             User ID: <span id="user-id-display" class="font-mono">Loading...</span>
@@ -193,22 +229,9 @@
                 <span class="absolute text-xl font-bold text-white bottom-4">Tap to Earn!</span>
             </div>
 
-            <!-- Action Buttons -->
-            <div class="grid grid-cols-3 gap-4 w-full mb-6">
-                <button id="daily-reward-btn" class="btn-secondary py-3 px-4 rounded-xl font-bold text-lg flex items-center justify-center">
-                    <i class="fas fa-gift mr-2"></i> Daily
-                </button>
-                <button id="upgrades-btn" class="btn-tertiary py-3 px-4 rounded-xl font-bold text-lg flex items-center justify-center">
-                    <i class="fas fa-rocket mr-2"></i> Upgrades
-                </button>
-                <button id="mining-btn" class="btn-primary py-3 px-4 rounded-xl font-bold text-lg flex items-center justify-center">
-                    <i class="fas fa-hammer mr-2"></i> Mines
-                </button>
-            </div>
-
-            <!-- New Settings Button -->
-            <button id="settings-btn" class="btn-secondary w-full py-3 px-4 rounded-xl font-bold text-lg flex items-center justify-center mb-6">
-                <i class="fas fa-cog mr-2"></i> Settings
+            <!-- Daily Reward Button (Moved from action buttons to its own section) -->
+            <button id="daily-reward-btn" class="btn-secondary w-full py-3 px-4 rounded-xl font-bold text-lg flex items-center justify-center mb-6">
+                <i class="fas fa-gift mr-2"></i> Daily Reward
             </button>
         </div>
 
@@ -251,7 +274,7 @@
             </div>
 
             <button id="close-upgrades-btn" class="btn-secondary w-full py-3 px-4 rounded-xl font-bold text-lg mt-4">
-                <i class="fas fa-arrow-left mr-2"></i> Back to Game
+                <i class="fas fa-arrow-left mr-2"></i> Back
             </button>
         </div>
 
@@ -273,25 +296,17 @@
                 </div>
 
             <button id="close-mining-btn" class="btn-secondary w-full py-3 px-4 rounded-xl font-bold text-lg mt-4">
-                <i class="fas fa-arrow-left mr-2"></i> Back to Game
+                <i class="fas fa-arrow-left mr-2"></i> Back
             </button>
         </div>
 
-        <div id="settings-section" class="w-full flex flex-col items-center hidden">
-            <h2 class="text-2xl font-bold text-center mb-4 text-blue-300"><i class="fas fa-cog mr-2"></i> Game Settings</h2>
+        <!-- Referrals Section (Moved and Enhanced) -->
+        <div id="referrals-section" class="w-full flex flex-col items-center hidden">
+            <h2 class="text-2xl font-bold text-center mb-4 text-green-300"><i class="fas fa-users mr-2"></i> Refer & Earn!</h2>
 
-            <div class="bg-gray-800 p-4 rounded-lg mb-4 shadow-md">
-                <h3 class="font-semibold text-xl text-yellow-400 mb-2"><i class="fas fa-star mr-2"></i> Your Level: <span id="player-level-display">1</span></h3>
-                <p class="text-sm text-gray-300">XP (Total Coins Earned): <span id="player-xp-display">0</span> / <span id="next-level-xp-display">1000</span></p>
-                <div class="w-full bg-gray-700 rounded-full h-2 mt-2">
-                    <div id="xp-progress-bar" class="bg-gradient-to-r from-yellow-400 to-orange-500 h-full rounded-full" style="width: 0%;"></div>
-                </div>
-                <p id="level-reward-info" class="text-sm text-gray-400 mt-2">Next reward: <span id="next-level-reward-display"></span> coins!</p>
-            </div>
-
-            <div class="bg-gray-800 p-4 rounded-lg mb-4 shadow-md">
-                <h3 class="font-semibold text-xl text-green-400 mb-2"><i class="fas fa-users mr-2"></i> Refer & Earn!</h3>
-                <p class="text-sm text-gray-300 mb-2">Share your link to invite friends and earn bonuses!</p>
+            <div class="bg-gray-800 p-4 rounded-lg mb-4 shadow-md w-full">
+                <h3 class="font-semibold text-xl text-green-400 mb-2">Your Referral Link:</h3>
+                <p class="text-sm text-gray-300 mb-2">Share this link to invite friends and earn bonuses!</p>
                 <div class="flex items-center bg-gray-900 rounded-lg p-3 break-all text-sm font-mono text-blue-300">
                     <span id="referral-link-display" class="flex-grow">Loading referral link...</span>
                     <button id="copy-referral-link-btn" class="ml-2 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs">
@@ -301,11 +316,69 @@
                 <p class="text-sm text-gray-400 mt-2">Referred friends: <span id="referred-count-display">0</span></p>
             </div>
 
-            <button id="close-settings-btn" class="btn-secondary w-full py-3 px-4 rounded-xl font-bold text-lg mt-4">
-                <i class="fas fa-arrow-left mr-2"></i> Back to Game
+            <button id="close-referrals-btn" class="btn-secondary w-full py-3 px-4 rounded-xl font-bold text-lg mt-4">
+                <i class="fas fa-arrow-left mr-2"></i> Back
+            </button>
+        </div>
+
+        <!-- Redeem Section (New) -->
+        <div id="redeem-section" class="w-full flex flex-col items-center hidden">
+            <h2 class="text-2xl font-bold text-center mb-4 text-purple-300"><i class="fas fa-trophy mr-2"></i> Redeem Rewards</h2>
+
+            <div class="bg-gray-800 p-4 rounded-lg mb-4 shadow-md w-full">
+                <h3 class="font-semibold text-xl text-yellow-400 mb-2">Tasks to Redeem:</h3>
+                <ul class="list-disc list-inside text-gray-300 mb-3">
+                    <li><span id="redeem-referrals-task">15 Referrals</span></li>
+                    <li><span id="redeem-coins-task">240,000,000 Total Coins Earned (XP)</span></li>
+                </ul>
+                <p class="text-sm text-gray-400 mb-4">Complete both tasks to redeem your reward!</p>
+                <button id="redeem-coins-btn" class="btn-primary w-full py-3 px-4 rounded-xl font-bold text-lg opacity-50 cursor-not-allowed" disabled>
+                    Redeem Coins (Reward: 10,000,000)
+                </button>
+                <p id="redeem-status-message" class="text-center text-red-400 text-sm mt-2 hidden">Not all tasks completed yet.</p>
+            </div>
+
+            <button id="close-redeem-btn" class="btn-secondary w-full py-3 px-4 rounded-xl font-bold text-lg mt-4">
+                <i class="fas fa-arrow-left mr-2"></i> Back
+            </button>
+        </div>
+
+        <!-- Membership Section (New) -->
+        <div id="membership-section" class="w-full flex flex-col items-center hidden">
+            <h2 class="text-2xl font-bold text-center mb-4 text-blue-300"><i class="fas fa-gem mr-2"></i> Membership Prices</h2>
+
+            <div class="bg-gray-800 p-4 rounded-lg mb-4 shadow-md w-full text-center">
+                <p class="text-lg text-gray-300">Information about membership tiers and prices will go here.</p>
+                <p class="text-sm text-gray-400 mt-2">Coming Soon!</p>
+            </div>
+
+            <button id="close-membership-btn" class="btn-secondary w-full py-3 px-4 rounded-xl font-bold text-lg mt-4">
+                <i class="fas fa-arrow-left mr-2"></i> Back
             </button>
         </div>
     </div>
+
+    <!-- Bottom Navigation Bar -->
+    <nav class="bottom-nav">
+        <button id="nav-home-btn" class="nav-btn active">
+            <i class="fas fa-home"></i> Home
+        </button>
+        <button id="nav-upgrades-btn" class="nav-btn">
+            <i class="fas fa-rocket"></i> Upgrades
+        </button>
+        <button id="nav-mines-btn" class="nav-btn">
+            <i class="fas fa-hammer"></i> Mines
+        </button>
+        <button id="nav-referrals-btn" class="nav-btn">
+            <i class="fas fa-users"></i> Referrals
+        </button>
+        <button id="nav-redeem-btn" class="nav-btn">
+            <i class="fas fa-gift"></i> Redeem
+        </button>
+        <button id="nav-membership-btn" class="nav-btn">
+            <i class="fas fa-gem"></i> Membership
+        </button>
+    </nav>
 
     <script type="module">
         // Telegram Web Apps SDK
@@ -336,15 +409,23 @@
         const energyBarFill = document.getElementById('energy-bar-fill');
         const tapArea = document.getElementById('tap-area');
         const dailyRewardBtn = document.getElementById('daily-reward-btn');
-        const upgradesBtn = document.getElementById('upgrades-btn');
-        const miningBtn = document.getElementById('mining-btn');
-        const settingsBtn = document.getElementById('settings-btn'); // New
+        // Removed individual action buttons as they are now in bottom nav
+        // const upgradesBtn = document.getElementById('upgrades-btn');
+        // const miningBtn = document.getElementById('mining-btn');
+        // const settingsBtn = document.getElementById('settings-btn');
+
         const upgradesSection = document.getElementById('upgrades-section');
         const miningSection = document.getElementById('mining-section');
-        const settingsSection = document.getElementById('settings-section'); // New
+        const referralsSection = document.getElementById('referrals-section'); // New
+        const redeemSection = document.getElementById('redeem-section');       // New
+        const membershipSection = document.getElementById('membership-section'); // New
+        
         const closeUpgradesBtn = document.getElementById('close-upgrades-btn');
         const closeMiningBtn = document.getElementById('close-mining-btn');
-        const closeSettingsBtn = document.getElementById('close-settings-btn'); // New
+        const closeReferralsBtn = document.getElementById('close-referrals-btn'); // New
+        const closeRedeemBtn = document.getElementById('close-redeem-btn');       // New
+        const closeMembershipBtn = document.getElementById('close-membership-btn'); // New
+        
         const messageBox = document.getElementById('message-box');
         const messageText = document.getElementById('message-text');
 
@@ -368,7 +449,7 @@
         const claimProfitBtn = document.getElementById('claim-profit-btn');
         const cardsList = document.getElementById('cards-list');
 
-        // Settings UI elements (New)
+        // Settings UI elements (Moved to Referrals/Levels sections)
         const playerLevelDisplay = document.getElementById('player-level-display');
         const playerXpDisplay = document.getElementById('player-xp-display');
         const nextLevelXpDisplay = document.getElementById('next-level-xp-display');
@@ -378,6 +459,20 @@
         const referralLinkDisplay = document.getElementById('referral-link-display');
         const copyReferralLinkBtn = document.getElementById('copy-referral-link-btn');
         const referredCountDisplay = document.getElementById('referred-count-display');
+
+        // Redeem UI elements (New)
+        const redeemReferralsTask = document.getElementById('redeem-referrals-task');
+        const redeemCoinsTask = document.getElementById('redeem-coins-task');
+        const redeemCoinsBtn = document.getElementById('redeem-coins-btn');
+        const redeemStatusMessage = document.getElementById('redeem-status-message');
+
+        // Bottom Navigation Buttons (New)
+        const navHomeBtn = document.getElementById('nav-home-btn');
+        const navUpgradesBtn = document.getElementById('nav-upgrades-btn');
+        const navMinesBtn = document.getElementById('nav-mines-btn');
+        const navReferralsBtn = document.getElementById('nav-referrals-btn');
+        const navRedeemBtn = document.getElementById('nav-redeem-btn');
+        const navMembershipBtn = document.getElementById('nav-membership-btn');
 
 
         // Global variables for Firebase config and app ID
@@ -448,7 +543,8 @@
             xp: 0, // Experience points (total coins earned)
             referredBy: null, // userId of the referrer, if any
             referredCount: 0, // Number of users this player has successfully referred
-            initialReferralBonusClaimed: false // To ensure a user only gets the bonus once
+            initialReferralBonusClaimed: false, // To ensure a user only gets the bonus once
+            isRedeemed: false // New: to track if redemption has been done
         };
 
         // Upgrade Costs and Increments (can be adjusted for game balance)
@@ -559,6 +655,13 @@
         ];
         const REFERRAL_BONUS_NEW_USER = 1000; // Coins for the new user joining via link
         const REFERRAL_BONUS_REFERRER = 500; // Coins for the referrer (per successful referral) - currently not implemented as direct bonus, only count.
+
+        // Redeem Configuration (New)
+        const REDEEM_REQUIREMENTS = {
+            referrals: 15,
+            xp: 240000000, // 24 Crores XP (Total Coins Earned)
+            reward: 10000000 // 10 Million coins as reward for redemption
+        };
 
         /**
          * Displays a temporary message to the user.
@@ -758,6 +861,33 @@
                 referralLinkDisplay.textContent = 'Loading...';
             }
             referredCountDisplay.textContent = gameState.referredCount;
+
+            // Update Redeem Section UI (New)
+            redeemReferralsTask.textContent = `${gameState.referredCount} / ${REDEEM_REQUIREMENTS.referrals} Referrals`;
+            redeemCoinsTask.textContent = `${Math.floor(gameState.xp)} / ${REDEEM_REQUIREMENTS.xp.toLocaleString()} Total Coins Earned (XP)`;
+            redeemCoinsBtn.textContent = `Redeem Coins (Reward: ${REDEEM_REQUIREMENTS.reward.toLocaleString()})`;
+
+            const canRedeem = gameState.referredCount >= REDEEM_REQUIREMENTS.referrals &&
+                             gameState.xp >= REDEEM_REQUIREMENTS.xp &&
+                             !gameState.isRedeemed; // Can only redeem once
+
+            redeemCoinsBtn.disabled = !canRedeem;
+            if (canRedeem) {
+                redeemCoinsBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                redeemStatusMessage.classList.add('hidden');
+            } else {
+                redeemCoinsBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                redeemStatusMessage.classList.remove('hidden');
+                if (gameState.isRedeemed) {
+                    redeemStatusMessage.textContent = "Reward already redeemed!";
+                } else if (gameState.referredCount < REDEEM_REQUIREMENTS.referrals && gameState.xp < REDEEM_REQUIREMENTS.xp) {
+                    redeemStatusMessage.textContent = "Tasks not completed yet.";
+                } else if (gameState.referredCount < REDEEM_REQUIREMENTS.referrals) {
+                    redeemStatusMessage.textContent = `Need ${REDEEM_REQUIREMENTS.referrals - gameState.referredCount} more referrals.`;
+                } else if (gameState.xp < REDEEM_REQUIREMENTS.xp) {
+                    redeemStatusMessage.textContent = `Need ${REDEEM_REQUIREMENTS.xp - gameState.xp} more XP.`;
+                }
+            }
         }
 
         /**
@@ -943,6 +1073,39 @@
         }
 
         /**
+         * Handles the redemption process. (New)
+         */
+        async function handleRedeem() {
+            console.log("Redeem button clicked!");
+            if (gameState.isRedeemed) {
+                showMessage("Reward already redeemed!", 'info');
+                return;
+            }
+
+            const referralsMet = gameState.referredCount >= REDEEM_REQUIREMENTS.referrals;
+            const coinsMet = gameState.xp >= REDEEM_REQUIREMENTS.xp;
+
+            if (referralsMet && coinsMet) {
+                gameState.coins += REDEEM_REQUIREMENTS.reward;
+                gameState.xp += REDEEM_REQUIREMENTS.reward; // XP for redemption reward
+                gameState.isRedeemed = true;
+                showMessage(`Redeemed! You received ${REDEEM_REQUIREMENTS.reward.toLocaleString()} coins!`, 'success');
+                updateUI();
+                await saveGameState();
+                checkLevelUp();
+            } else {
+                let message = "You have not met all redemption requirements:";
+                if (!referralsMet) {
+                    message += ` Need ${REDEEM_REQUIREMENTS.referrals - gameState.referredCount} more referrals.`;
+                }
+                if (!coinsMet) {
+                    message += ` Need ${(REDEEM_REQUIREMENTS.xp - gameState.xp).toLocaleString()} more XP.`;
+                }
+                showMessage(message, 'error');
+            }
+        }
+
+        /**
          * Starts the energy regeneration and passive income loops.
          */
         function startGameLoops() {
@@ -1004,59 +1167,29 @@
         }
 
 
-        // Event Listeners for Game
-        // Changed from 'click' to 'touchstart' for multitap support
-        tapArea.addEventListener('touchstart', (event) => {
-            event.preventDefault(); // Prevent default browser touch behavior (like scrolling/zooming)
-            // Handle each touch individually
-            for (let i = 0; i < event.touches.length; i++) {
-                // Pass the individual touch object to handleTap
-                handleTap(event.touches[i]);
-            }
-        });
-
+        // Event Listeners for Main Game Buttons (now part of bottom nav)
         dailyRewardBtn.addEventListener('click', claimDailyReward);
 
-        upgradesBtn.addEventListener('click', (event) => { // Added event parameter
-            event.preventDefault(); // Prevent default button behavior
-            console.log("Upgrades button clicked!");
-            showSection(upgradesSection);
-        });
-        closeUpgradesBtn.addEventListener('click', (event) => { // Added event parameter
-            event.preventDefault(); // Prevent default button behavior
-            console.log("Closing upgrades section!");
-            showSection(gameSection);
-        });
+        // Bottom Navigation Event Listeners (New)
+        navHomeBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Home clicked!"); showSection(gameSection); });
+        navUpgradesBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Upgrades clicked!"); showSection(upgradesSection); });
+        navMinesBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Mines clicked!"); showSection(miningSection); });
+        navReferralsBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Referrals clicked!"); showSection(referralsSection); });
+        navRedeemBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Redeem clicked!"); showSection(redeemSection); updateUI(); }); // Update UI to refresh redeem status
+        navMembershipBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Membership clicked!"); showSection(membershipSection); });
 
-        miningBtn.addEventListener('click', (event) => { // Added event parameter
-            event.preventDefault(); // Prevent default button behavior
-            console.log("Mining button clicked!");
-            showSection(miningSection);
-        });
-        closeMiningBtn.addEventListener('click', (event) => { // Added event parameter
-            event.preventDefault(); // Prevent default button behavior
-            console.log("Closing mining section!");
-            showSection(gameSection);
-        });
+        // Back buttons
+        closeUpgradesBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Closing upgrades section!"); showSection(gameSection); });
+        closeMiningBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Closing mining section!"); showSection(gameSection); });
+        closeReferralsBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Closing referrals section!"); showSection(gameSection); });
+        closeRedeemBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Closing redeem section!"); showSection(gameSection); });
+        closeMembershipBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Closing membership section!"); showSection(gameSection); });
 
-        settingsBtn.addEventListener('click', (event) => { // Added event parameter
-            event.preventDefault(); // Prevent default button behavior
-            console.log("Settings button clicked!");
-            showSection(settingsSection);
-        });
-        closeSettingsBtn.addEventListener('click', (event) => { // Added event parameter
-            event.preventDefault(); // Prevent default button behavior
-            console.log("Closing settings section!");
-            showSection(gameSection);
-        });
-
+        // Other action buttons
         claimProfitBtn.addEventListener('click', claimAccumulatedProfit);
-
         upgradeTapPowerBtn.addEventListener('click', () => purchaseUpgrade('tapPower'));
         upgradeEnergyCapacityBtn.addEventListener('click', () => purchaseUpgrade('energyCapacity'));
         upgradeEnergyRegenBtn.addEventListener('click', () => purchaseUpgrade('energyRegen'));
-
-        // Copy Referral Link Button
         copyReferralLinkBtn.addEventListener('click', () => {
             const referralLink = referralLinkDisplay.textContent;
             if (referralLink && referralLink !== 'Loading referral link...') {
@@ -1071,6 +1204,8 @@
                 showMessage('Referral link not available yet.', 'info');
             }
         });
+        redeemCoinsBtn.addEventListener('click', handleRedeem); // New event listener for redeem button
+
 
         /**
          * Helper function to show only one section and hide others.
@@ -1082,60 +1217,25 @@
             gameSection.classList.add('hidden');
             upgradesSection.classList.add('hidden');
             miningSection.classList.add('hidden');
-            settingsSection.classList.add('hidden');
+            referralsSection.classList.add('hidden'); // New
+            redeemSection.classList.add('hidden');     // New
+            membershipSection.classList.add('hidden'); // New
             referralInputSection.classList.add('hidden'); // Also hide referral input if it was visible
             telegramOnlyMessage.classList.add('hidden'); // Ensure this is also hidden
 
             // Show the desired section by removing 'hidden' class
             sectionToShow.classList.remove('hidden');
+
+            // Update active state of bottom navigation buttons
+            document.querySelectorAll('.bottom-nav .nav-btn').forEach(btn => btn.classList.remove('active'));
+            if (sectionToShow === gameSection) navHomeBtn.classList.add('active');
+            else if (sectionToShow === upgradesSection) navUpgradesBtn.classList.add('active');
+            else if (sectionToShow === miningSection) navMinesBtn.classList.add('active');
+            else if (sectionToShow === referralsSection) navReferralsBtn.classList.add('active');
+            else if (sectionToShow === redeemSection) navRedeemBtn.classList.add('active');
+            else if (sectionToShow === membershipSection) navMembershipBtn.classList.add('active');
+
             console.log(`Section ${sectionToShow.id} visibility: ${!sectionToShow.classList.contains('hidden')}`);
-        }
-
-        /**
-         * Initializes a new user's game state after referral input (or no referral).
-         * @param {string|null} referrerId The ID of the referrer, or null if none.
-         */
-        async function initializeNewUserGame(referrerId) {
-            console.log(`Initializing new user game for ID: ${userId} with referrer: ${referrerId}`);
-            gameState.lastProfitCalculationTime = Date.now();
-
-            // coinsPerTap for new users is always 1 initially, no midnight bonus logic here
-            gameState.coinsPerTap = 1; 
-
-            if (referrerId && referrerId !== userId) {
-                gameState.referredBy = referrerId;
-                gameState.coins += REFERRAL_BONUS_NEW_USER;
-                gameState.xp += REFERRAL_BONUS_NEW_USER; // XP for referral bonus
-                gameState.initialReferralBonusClaimed = true;
-                showMessage(`Welcome bonus! +${REFERRAL_BONUS_NEW_USER} coins for joining via a referral!`, 'success');
-                console.log(`New user bonus applied. Referred by: ${referrerId}`);
-            }
-
-            await setDoc(gameDataRef, gameState)
-                .then(() => console.log("Initial game state set successfully."))
-                .catch(error => console.error("Error setting initial game state:", error));
-
-            // If a referrer exists, attempt to increment their count
-            if (referrerId && referrerId !== userId) {
-                try {
-                    const referrerGameDataRef = doc(db, `artifacts/${appId}/users/${referrerId}/hamster_coin_game`, 'game_state');
-                    await updateDoc(referrerGameDataRef, {
-                        referredCount: increment(1)
-                    });
-                    console.log(`Referrer (${referrerId}) count incremented.`);
-                } catch (error) {
-                    console.warn(`Could not increment referrer (${referrerId}) count:`, error);
-                    showMessage("Could not update referrer's count (Firebase rules might be too strict or referrer doesn't exist).", 'info');
-                }
-            }
-
-            recalculateHourlyProfit();
-            updateUI();
-            showSection(gameSection); // Show the main game section
-            loadingOverlay.classList.add('hidden');
-            startGameLoops();
-            console.log("New game initialized and UI updated.");
-            checkLevelUp();
         }
 
 
