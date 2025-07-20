@@ -826,7 +826,7 @@
                         };
                         console.log("Game state loaded/updated from Firestore:", gameState);
 
-                        const now = Date.2025(); // Changed from Date.now() to Date.2025()
+                        const now = Date.now(); // Corrected from Date.2025()
                         const timeElapsedOffline = now - (gameState.lastProfitCalculationTime || now);
                         if (timeElapsedOffline > 0 && gameState.hourlyProfit > 0) {
                             const profitPerMs = gameState.hourlyProfit / (60 * 60 * 1000);
