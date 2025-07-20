@@ -369,6 +369,35 @@
         import { getAuth } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot, updateDoc, increment, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // Helper function to show only one section and hide others.
+        // Defined at the top level to ensure it's always available.
+        function showSection(sectionToShow) {
+            console.log(`Attempting to show section: ${sectionToShow.id}`);
+            // Hide all main sections by adding 'hidden' class
+            gameSection.classList.add('hidden');
+            upgradesSection.classList.add('hidden');
+            miningSection.classList.add('hidden');
+            referralsSection.classList.add('hidden');
+            redeemSection.classList.add('hidden');
+            membershipSection.classList.add('hidden');
+            referralInputSection.classList.add('hidden'); // Also hide referral input if it was visible
+            telegramOnlyMessage.classList.add('hidden'); // Ensure this is also hidden
+
+            // Show the desired section by removing 'hidden' class
+            sectionToShow.classList.remove('hidden');
+            console.log(`Section ${sectionToShow.id} visibility: ${!sectionToShow.classList.contains('hidden')}`);
+
+            // Update active state of bottom navigation buttons
+            document.querySelectorAll('.bottom-nav .nav-btn').forEach(btn => btn.classList.remove('active'));
+            if (sectionToShow === gameSection) navHomeBtn.classList.add('active');
+            else if (sectionToShow === upgradesSection) navUpgradesBtn.classList.add('active');
+            else if (sectionToShow === miningSection) navMinesBtn.classList.add('active');
+            else if (sectionToShow === referralsSection) navReferralsBtn.classList.add('active');
+            else if (sectionToShow === redeemSection) navRedeemBtn.classList.add('active');
+            else if (sectionToShow === membershipSection) navMembershipBtn.classList.add('active');
+        }
+
+
         // UI Elements (Declared with let and assigned in DOMContentLoaded)
         let loadingOverlay;
         let telegramOnlyMessage;
