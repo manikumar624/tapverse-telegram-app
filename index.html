@@ -309,8 +309,8 @@
 
 
         // Global variables for Firebase config and app ID
-        // HARDCODED FOR DEBUGGING - REPLACE WITH SECURE METHOD FOR PRODUCTION
-        const appId = 'YOUR_APP_ID_HERE'; // Replace with your actual __app_id value (e.g., 'tapverse-game-id')
+        // HARDCODED FOR DEBUGGING - REMOVE THIS BLOCK AND USE VERCEL ENV VARS FOR PRODUCTION
+        const appId = 'smkvmk-f9b65'; // Using projectId as appId for simplicity in debugging
         const firebaseConfig = {
           apiKey: "AIzaSyANRGHTMawNZKQZiXh4zw84DTsB4hNODAs",
           authDomain: "smkvmk-f9b65.firebaseapp.com",
@@ -321,7 +321,7 @@
           measurementId: "G-F8WBFFSP4M"
         };
         console.log("Firebase Config (hardcoded):", firebaseConfig);
-        // END HARDCODED SECTION
+        // END HARDCODED DEBUGGING SECTION
 
 
         // Initialize Firebase
