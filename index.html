@@ -128,8 +128,20 @@
         <p id="message-text"></p>
     </div>
 
-    <!-- Main Game Container -->
-    <div class="w-full max-w-md bg-gray-800 rounded-xl shadow-2xl p-6 flex flex-col items-center relative overflow-hidden">
+    <!-- Telegram-only access message -->
+    <div id="telegram-only-message" class="w-full max-w-md bg-gray-800 rounded-xl shadow-2xl p-6 flex flex-col items-center justify-center min-h-[400px] text-center hidden">
+        <i class="fab fa-telegram-plane text-6xl text-blue-400 mb-4"></i>
+        <h2 class="text-2xl font-bold text-yellow-400 mb-4">Game Access Restricted</h2>
+        <p class="text-lg text-gray-300">This game can only be played through our official Telegram bot.</p>
+        <p class="text-md text-gray-400 mt-2">Please open it via the bot's menu button.</p>
+        <!-- You can add a link to your bot here if you know its full t.me link -->
+        <!-- <a href="https://t.me/YourBotUsername" target="_blank" class="mt-6 btn-secondary py-3 px-6 rounded-xl font-bold text-lg">
+            Go to Telegram Bot
+        </a> -->
+    </div>
+
+    <!-- Main Game Container (Initially hidden) -->
+    <div id="game-section" class="w-full max-w-md bg-gray-800 rounded-xl shadow-2xl p-6 flex flex-col items-center relative overflow-hidden hidden">
         <!-- User ID Display -->
         <div class="absolute top-4 left-4 text-xs text-gray-400">
             User ID: <span id="user-id-display" class="font-mono">Loading...</span>
@@ -244,23 +256,17 @@
     <!-- Firebase SDKs -->
     <script type="module">
         // Telegram Web Apps SDK
-        // This script is crucial for your web app to interact with Telegram.
-        // It provides the `window.Telegram.WebApp` object.
         if (typeof window.Telegram !== 'undefined' && window.Telegram.WebApp) {
             window.Telegram.WebApp.ready();
-            // Optional: Expand the web app to full screen
             window.Telegram.WebApp.expand();
             console.log("Telegram WebApp is ready!");
-            // You can also get user data from Telegram here if needed:
-            // const telegramUser = window.Telegram.WebApp.initDataUnsafe.user;
-            // console.log("Telegram User:", telegramUser);
         } else {
             console.log("Not running inside Telegram WebApp.");
         }
 
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Global variables for Firebase config and app ID
         const appId = typeof __app_id !== 'undefined' ? String(__app_id) : 'default-hamster-app-id';
@@ -274,6 +280,8 @@
         let userId = null;
         let gameDataRef = null;
         let unsubscribeSnapshot = null; // To store the unsubscribe function for onSnapshot
+        let energyRegenInterval = null; // To store the interval ID for energy regen
+        let passiveIncomeInterval = null; // To store the interval ID for passive income
 
         // Game State
         let gameState = {
@@ -296,6 +304,9 @@
 
         // UI Elements
         const loadingOverlay = document.getElementById('loading-overlay');
+        const telegramOnlyMessage = document.getElementById('telegram-only-message'); // New
+        const gameSection = document.getElementById('game-section');
+
         const userIdDisplay = document.getElementById('user-id-display');
         const coinsDisplay = document.getElementById('coins-display');
         const energyDisplay = document.getElementById('energy-display');
@@ -708,32 +719,99 @@
         }
 
         /**
-         * Regenerates energy over time.
+         * Starts the energy regeneration and passive income loops.
          */
-        function energyRegenerationLoop() {
-            setInterval(() => {
-                if (gameState.energy < gameState.maxEnergy) {
-                    gameState.energy = Math.min(gameState.maxEnergy, gameState.energy + gameState.energyRegenRate);
-                    updateUI();
+        function startGameLoops() {
+            if (!energyRegenInterval) {
+                energyRegenInterval = setInterval(() => {
+                    if (gameState.energy < gameState.maxEnergy) {
+                        gameState.energy = Math.min(gameState.maxEnergy, gameState.energy + gameState.energyRegenRate);
+                        updateUI();
+                    }
+                }, 1000); // Regenerate every second
+            }
+
+            if (!passiveIncomeInterval) {
+                passiveIncomeInterval = setInterval(() => {
+                    updateAccumulatedProfit();
+                }, 1000); // Check and update accumulated profit every second
+            }
+        }
+
+        /**
+         * Stops the energy regeneration and passive income loops.
+         */
+        function stopGameLoops() {
+            if (energyRegenInterval) {
+                clearInterval(energyRegenInterval);
+                energyRegenInterval = null;
+            }
+            if (passiveIncomeInterval) {
+                clearInterval(passiveIncomeInterval);
+                passiveIncomeInterval = null;
+            }
+        }
+
+        /**
+         * Loads game data for a given user ID.
+         * @param {string} id The user ID to load data for.
+         */
+        async function loadGameData(id) {
+            userId = id;
+            userIdDisplay.textContent = userId;
+            gameDataRef = doc(db, `artifacts/${appId}/users/${userId}/hamster_coin_game`, 'game_state');
+
+            stopGameLoops();
+            if (unsubscribeSnapshot) {
+                unsubscribeSnapshot();
+                unsubscribeSnapshot = null;
+            }
+
+            unsubscribeSnapshot = onSnapshot(gameDataRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const loadedState = docSnap.data();
+                    gameState = {
+                        ...gameState,
+                        ...loadedState,
+                        upgradeLevels: { ...gameState.upgradeLevels, ...(loadedState.upgradeLevels || {}) },
+                        ownedCards: { ...gameState.ownedCards, ...(loadedState.ownedCards || {}) }
+                    };
+                    console.log("Game state loaded/updated from Firestore:", gameState);
+
+                    const now = Date.now();
+                    const timeElapsedOffline = now - (gameState.lastProfitCalculationTime || now);
+                    if (timeElapsedOffline > 0 && gameState.hourlyProfit > 0) {
+                        const profitPerMs = gameState.hourlyProfit / (60 * 60 * 1000);
+                        const offlineProfit = profitPerMs * timeElapsedOffline;
+                        gameState.accumulatedProfit += offlineProfit;
+                        showMessage(`Welcome back! You earned ${Math.floor(offlineProfit)} coins while away.`, 'info');
+                    }
+                    gameState.lastProfitCalculationTime = now;
+                } else {
+                    console.log("No game state found, initializing new game.");
+                    gameState.lastProfitCalculationTime = Date.now();
+                    setDoc(gameDataRef, gameState);
                 }
-            }, 1000); // Regenerate every second
+                recalculateHourlyProfit();
+                updateUI();
+                gameSection.classList.remove('hidden'); // Show game
+                telegramOnlyMessage.classList.add('hidden'); // Hide message
+                loadingOverlay.classList.add('hidden');
+                startGameLoops(); // Start game loops only after data is ready
+            }, (error) => {
+                console.error("Error listening to game state:", error);
+                showMessage("Error loading game data.", 'error');
+                loadingOverlay.classList.add('hidden');
+            });
         }
 
-        // Periodic update for accumulated profit
-        function passiveIncomeLoop() {
-            setInterval(() => {
-                updateAccumulatedProfit();
-            }, 1000); // Check and update accumulated profit every second
-        }
-
-
-        // Event Listeners
+        // Event Listeners for Game
         tapArea.addEventListener('click', handleTap);
         dailyRewardBtn.addEventListener('click', claimDailyReward);
 
         upgradesBtn.addEventListener('click', () => {
             upgradesSection.classList.remove('hidden');
-            miningSection.classList.add('hidden'); // Hide mining section if open
+            miningSection.classList.add('hidden');
         });
         closeUpgradesBtn.addEventListener('click', () => {
             upgradesSection.classList.add('hidden');
@@ -741,8 +819,8 @@
 
         miningBtn.addEventListener('click', () => {
             miningSection.classList.remove('hidden');
-            upgradesSection.classList.add('hidden'); // Hide upgrades section if open
-            updateUI(); // Ensure cards are rendered correctly when opening
+            upgradesSection.classList.add('hidden');
+            updateUI();
         });
         closeMiningBtn.addEventListener('click', () => {
             miningSection.classList.add('hidden');
@@ -754,83 +832,20 @@
         upgradeEnergyCapacityBtn.addEventListener('click', () => purchaseUpgrade('energyCapacity'));
         upgradeEnergyRegenBtn.addEventListener('click', () => purchaseUpgrade('energyRegen'));
 
-        // Firebase Authentication and Data Loading
-        onAuthStateChanged(auth, async (user) => {
-            let effectiveUserId = null;
+        // Initial check for Telegram Web App on DOMContentLoaded
+        document.addEventListener('DOMContentLoaded', () => {
+            loadingOverlay.classList.remove('hidden'); // Always show loading initially
 
-            // Try to get Telegram user ID if available
             if (typeof window.Telegram !== 'undefined' && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
-                effectiveUserId = `telegram_${window.Telegram.WebApp.initDataUnsafe.user.id}`;
-                console.log("Using Telegram User ID:", effectiveUserId);
-            } else if (user) {
-                // Fallback to Firebase Auth UID if not in Telegram or Telegram user data is missing
-                effectiveUserId = user.uid;
-                console.log("Using Firebase Auth UID:", effectiveUserId);
+                // If in Telegram WebApp, get Telegram ID and load data
+                const telegramUserId = `telegram_${window.Telegram.WebApp.initDataUnsafe.user.id}`;
+                loadGameData(telegramUserId);
             } else {
-                // If no user and not in Telegram, sign in anonymously
-                try {
-                    const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? String(__initial_auth_token) : '';
-                    if (initialAuthToken) {
-                        await signInWithCustomToken(auth, initialAuthToken);
-                    } else {
-                        await signInAnonymously(auth);
-                    }
-                    effectiveUserId = auth.currentUser?.uid || crypto.randomUUID(); // Get UID after sign-in
-                    console.log("Signed in anonymously. Using UID:", effectiveUserId);
-                } catch (error) {
-                    console.error("Error signing in:", error);
-                    showMessage("Failed to sign in. Please try again.", 'error');
-                    loadingOverlay.classList.add('hidden');
-                    return; // Exit if sign-in fails
-                }
-            }
-
-            userId = effectiveUserId;
-            userIdDisplay.textContent = userId;
-            // Use the effectiveUserId for the Firestore document path
-            gameDataRef = doc(db, `artifacts/${appId}/users/${userId}/hamster_coin_game`, 'game_state');
-
-            // Set up real-time listener for game state
-            unsubscribeSnapshot = onSnapshot(gameDataRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    const loadedState = docSnap.data();
-                    // Merge loaded state with default, ensuring new fields are present
-                    gameState = {
-                        ...gameState,
-                        ...loadedState,
-                        upgradeLevels: { ...gameState.upgradeLevels, ...(loadedState.upgradeLevels || {}) },
-                        ownedCards: { ...gameState.ownedCards, ...(loadedState.ownedCards || {}) }
-                    };
-                    console.log("Game state loaded/updated from Firestore:", gameState);
-
-                    // Calculate offline profit immediately after loading state
-                    const now = Date.now();
-                    const timeElapsedOffline = now - (gameState.lastProfitCalculationTime || now); // Use now if no last time
-                    if (timeElapsedOffline > 0 && gameState.hourlyProfit > 0) {
-                        const profitPerMs = gameState.hourlyProfit / (60 * 60 * 1000);
-                        const offlineProfit = profitPerMs * timeElapsedOffline;
-                        gameState.accumulatedProfit += offlineProfit;
-                        showMessage(`Welcome back! You earned ${Math.floor(offlineProfit)} coins while away.`, 'info');
-                    }
-                    gameState.lastProfitCalculationTime = now; // Update timestamp after calculating offline profit
-                } else {
-                    // Document doesn't exist, create initial state
-                    console.log("No game state found, initializing new game.");
-                    gameState.lastProfitCalculationTime = Date.now(); // Initialize for new game
-                    setDoc(gameDataRef, gameState);
-                }
-                recalculateHourlyProfit(); // Ensure hourly profit is correct after loading
-                updateUI();
-                loadingOverlay.classList.add('hidden'); // Hide loading overlay once data is ready
-            }, (error) => {
-                console.error("Error listening to game state:", error);
-                showMessage("Error loading game data.", 'error');
+                // Not in Telegram WebApp, show message and hide game
                 loadingOverlay.classList.add('hidden');
-            });
-
-            // Start energy regeneration loop and passive income loop after data is loaded
-            energyRegenerationLoop();
-            passiveIncomeLoop();
+                gameSection.classList.add('hidden');
+                telegramOnlyMessage.classList.remove('hidden');
+            }
         });
 
         // Cleanup on window unload (optional, but good practice for real-time listeners)
@@ -839,6 +854,7 @@
                 unsubscribeSnapshot();
                 console.log("Firestore listener unsubscribed.");
             }
+            stopGameLoops();
         });
     </script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
