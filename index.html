@@ -711,7 +711,10 @@
                 }
 
                 const cardElement = document.createElement('div');
-                cardElement.classList.add('flex', 'items-center', 'justify-between', 'bg-gray-800', 'p-4', 'rounded-lg', 'shadow-md', isLocked ? 'opacity-50' : '');
+                cardElement.classList.add('flex', 'items-center', 'justify-between', 'bg-gray-800', 'p-4', 'rounded-lg', 'shadow-md');
+                if (isLocked) { // Only add opacity-50 if locked
+                    cardElement.classList.add('opacity-50');
+                }
                 cardElement.innerHTML = `
                     <div>
                         <h3 class="font-semibold text-lg ${isLocked ? 'text-gray-500' : 'text-purple-400'}">${card.icon} ${card.name} <span class="text-gray-400">(Lv. ${currentLevel})</span></h3>
@@ -1175,7 +1178,7 @@
                         }
                         gameState.lastProfitCalculationTime = now;
                         
-                        // Ensure coinsPerTap is correctly set based on upgrades, not a bonus
+                        // Ensure coinsPerTap is correctly set based on upgrades
                         gameState.coinsPerTap = 1 + (gameState.upgradeLevels.tapPower * UPGRADE_CONFIG.tapPower.increment);
 
                         recalculateHourlyProfit();
