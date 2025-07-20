@@ -31,6 +31,14 @@
             font-family: 'Inter', sans-serif;
             background-color: #0d1117; /* Dark background */
             color: #e2e8f0; /* Light text color */
+            min-height: 100vh; /* Ensure body takes full viewport height */
+            width: 100vw; /* Ensure body takes full viewport width */
+            margin: 0; /* Remove default margin */
+            padding: 0; /* Remove default padding */
+            display: flex; /* Ensure flex context for direct children */
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start; /* Align to top, not center, to allow scrolling if content overflows */
         }
 
         /* Custom button styles */
@@ -116,7 +124,7 @@
 <body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col items-center p-4">
 
     <!-- Loading Overlay -->
-    <div id="loading-overlay" class="fixed inset-0 bg-gray-900 bg-opacity-95 flex items-center justify-center z-50">
+    <div id="loading-overlay" class="fixed inset-0 bg-red-900 bg-opacity-95 flex items-center justify-center z-50">
         <div class="text-center">
             <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-green-500 mx-auto"></div>
             <p class="mt-4 text-lg text-green-400">Loading Game...</p>
@@ -141,14 +149,14 @@
     </div>
 
     <!-- Main Game Container (All sections are now children of this wrapper) -->
-    <div id="game-wrapper" class="w-full max-w-md bg-gray-800 rounded-xl shadow-2xl p-6 relative overflow-hidden hidden">
+    <div id="game-wrapper" class="w-full max-w-md bg-gray-800 rounded-xl shadow-2xl p-6 relative overflow-hidden" style="min-height: 500px;">
         <!-- User ID Display (Always visible) -->
         <div class="absolute top-4 left-4 text-xs text-gray-400 z-10">
             User ID: <span id="user-id-display" class="font-mono">Loading...</span>
         </div>
 
         <!-- Section for Main Game -->
-        <div id="game-section" class="w-full h-full absolute inset-0 flex flex-col items-center hidden">
+        <div id="game-section" class="w-full flex flex-col items-center hidden">
             <!-- Custom Logo (Bitcoin Icon) -->
             <div id="logo-container" class="mb-4">
                 <i class="fab fa-bitcoin text-6xl text-yellow-500"></i>
@@ -196,7 +204,7 @@
 
 
         <!-- Upgrades Section -->
-        <div id="upgrades-section" class="w-full h-full absolute inset-0 flex flex-col items-center hidden">
+        <div id="upgrades-section" class="w-full flex flex-col items-center hidden">
             <h2 class="text-2xl font-bold text-center mb-4 text-yellow-300">Boost Your Tapping!</h2>
 
             <!-- Tap Power Upgrade -->
@@ -238,7 +246,7 @@
         </div>
 
         <!-- Mining Section -->
-        <div id="mining-section" class="w-full h-full absolute inset-0 flex flex-col items-center hidden">
+        <div id="mining-section" class="w-full flex flex-col items-center hidden">
             <h2 class="text-2xl font-bold text-center mb-4 text-purple-300">Passive Income!</h2>
 
             <div class="flex justify-between items-center bg-gray-800 p-4 rounded-lg mb-4 shadow-md">
@@ -261,7 +269,7 @@
         </div>
 
         <!-- Settings Section (New) -->
-        <div id="settings-section" class="w-full h-full absolute inset-0 flex flex-col items-center hidden">
+        <div id="settings-section" class="w-full flex flex-col items-center hidden">
             <h2 class="text-2xl font-bold text-center mb-4 text-blue-300"><i class="fas fa-cog mr-2"></i> Game Settings</h2>
 
             <!-- Levels Sub-section -->
@@ -1008,23 +1016,14 @@
          */
         function showSection(sectionToShow) {
             console.log(`Attempting to show section: ${sectionToShow.id}`);
-            // Hide all main sections first
-            // Ensure all sections are correctly referenced and hidden
+            // Hide all main sections by adding 'hidden' class
             gameSection.classList.add('hidden');
-            gameSection.style.display = 'none'; 
-
             upgradesSection.classList.add('hidden');
-            upgradesSection.style.display = 'none';
-
             miningSection.classList.add('hidden');
-            miningSection.style.display = 'none';
-
             settingsSection.classList.add('hidden');
-            settingsSection.style.display = 'none';
 
-            // Then show the desired section
+            // Show the desired section by removing 'hidden' class
             sectionToShow.classList.remove('hidden');
-            sectionToShow.style.display = 'flex'; // Explicitly show (using flex as it's a flex container)
             console.log(`Section ${sectionToShow.id} visibility: ${!sectionToShow.classList.contains('hidden')}`);
         }
 
@@ -1055,8 +1054,8 @@
                         gameState = {
                             ...gameState,
                             ...loadedState,
-                            upgradeLevels: { ...gameState.upgradeLevels, ...(loadedState.upgradeLevels || {}) },
-                            ownedCards: { ...gameState.ownedCards, ...(loadedState.ownedCards || {}) }
+                            upgradeLevels: { ...loadedState.upgradeLevels || {} }, // Ensure nested objects are merged
+                            ownedCards: { ...loadedState.ownedCards || {} } // Ensure nested objects are merged
                         };
                         console.log("Game state loaded/updated from Firestore:", gameState);
 
@@ -1157,7 +1156,7 @@
                 } else {
                     console.error("Telegram WebApp detected, but user.id is undefined. Cannot load game data.");
                     loadingOverlay.classList.add('hidden');
-                    gameWrapper.classList.add('hidden'); // Hide game wrapper
+                    gameWrapper.classList.add('hidden'); // Hide game wrapper explicitly
                     telegramOnlyMessage.classList.remove('hidden');
                     document.getElementById('telegram-only-message').innerHTML = `
                         <i class="fas fa-exclamation-triangle text-6xl text-red-400 mb-4"></i>
@@ -1170,7 +1169,7 @@
                 console.warn("Not in Telegram WebApp or user data not available. Displaying restriction message.");
                 // Not in Telegram WebApp, show message and hide game
                 loadingOverlay.classList.add('hidden');
-                gameWrapper.classList.add('hidden'); // Hide game wrapper
+                gameWrapper.classList.add('hidden'); // Hide game wrapper explicitly
                 telegramOnlyMessage.classList.remove('hidden');
             }
         });
