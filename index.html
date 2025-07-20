@@ -141,14 +141,14 @@
     </div>
 
     <!-- Main Game Container (All sections are now children of this wrapper) -->
-    <div id="game-wrapper" class="w-full max-w-md bg-gray-800 rounded-xl shadow-2xl p-6 flex flex-col items-center relative overflow-hidden hidden">
+    <div id="game-wrapper" class="w-full max-w-md bg-gray-800 rounded-xl shadow-2xl p-6 relative overflow-hidden hidden">
         <!-- User ID Display (Always visible) -->
         <div class="absolute top-4 left-4 text-xs text-gray-400 z-10">
             User ID: <span id="user-id-display" class="font-mono">Loading...</span>
         </div>
 
         <!-- Section for Main Game -->
-        <div id="game-section" class="w-full flex flex-col items-center hidden">
+        <div id="game-section" class="w-full h-full absolute inset-0 flex flex-col items-center hidden">
             <!-- Custom Logo (Bitcoin Icon) -->
             <div id="logo-container" class="mb-4">
                 <i class="fab fa-bitcoin text-6xl text-yellow-500"></i>
@@ -196,7 +196,7 @@
 
 
         <!-- Upgrades Section -->
-        <div id="upgrades-section" class="w-full flex flex-col items-center hidden">
+        <div id="upgrades-section" class="w-full h-full absolute inset-0 flex flex-col items-center hidden">
             <h2 class="text-2xl font-bold text-center mb-4 text-yellow-300">Boost Your Tapping!</h2>
 
             <!-- Tap Power Upgrade -->
@@ -238,7 +238,7 @@
         </div>
 
         <!-- Mining Section -->
-        <div id="mining-section" class="w-full flex flex-col items-center hidden">
+        <div id="mining-section" class="w-full h-full absolute inset-0 flex flex-col items-center hidden">
             <h2 class="text-2xl font-bold text-center mb-4 text-purple-300">Passive Income!</h2>
 
             <div class="flex justify-between items-center bg-gray-800 p-4 rounded-lg mb-4 shadow-md">
@@ -261,7 +261,7 @@
         </div>
 
         <!-- Settings Section (New) -->
-        <div id="settings-section" class="w-full flex flex-col items-center hidden">
+        <div id="settings-section" class="w-full h-full absolute inset-0 flex flex-col items-center hidden">
             <h2 class="text-2xl font-bold text-center mb-4 text-blue-300"><i class="fas fa-cog mr-2"></i> Game Settings</h2>
 
             <!-- Levels Sub-section -->
@@ -1157,7 +1157,7 @@
                 } else {
                     console.error("Telegram WebApp detected, but user.id is undefined. Cannot load game data.");
                     loadingOverlay.classList.add('hidden');
-                    gameSection.classList.add('hidden');
+                    gameWrapper.classList.add('hidden'); // Hide game wrapper
                     telegramOnlyMessage.classList.remove('hidden');
                     document.getElementById('telegram-only-message').innerHTML = `
                         <i class="fas fa-exclamation-triangle text-6xl text-red-400 mb-4"></i>
@@ -1170,7 +1170,7 @@
                 console.warn("Not in Telegram WebApp or user data not available. Displaying restriction message.");
                 // Not in Telegram WebApp, show message and hide game
                 loadingOverlay.classList.add('hidden');
-                gameSection.classList.add('hidden');
+                gameWrapper.classList.add('hidden'); // Hide game wrapper
                 telegramOnlyMessage.classList.remove('hidden');
             }
         });
