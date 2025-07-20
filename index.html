@@ -470,14 +470,21 @@
         } catch (error) {
             console.error("Firebase initialization failed:", error);
             // Fallback UI for Firebase init failure
-            loadingOverlay.classList.add('hidden');
-            telegramOnlyMessage.classList.remove('hidden');
-            document.getElementById('telegram-only-message').innerHTML = `
-                <i class="fas fa-exclamation-triangle text-6xl text-red-400 mb-4"></i>
-                <h2 class="text-2xl font-bold text-red-400 mb-4">Game Error</h2>
-                <p class="text-lg text-gray-300">Failed to initialize game services. Please contact support.</p>
-                <p class="text-md text-gray-400 mt-2">Error: ${error.message}</p>
-            `;
+            // Ensure elements are available before trying to manipulate them
+            document.addEventListener('DOMContentLoaded', () => {
+                loadingOverlay = document.getElementById('loading-overlay');
+                telegramOnlyMessage = document.getElementById('telegram-only-message');
+                gameWrapper = document.getElementById('game-wrapper');
+                loadingOverlay.classList.add('hidden');
+                gameWrapper.classList.add('hidden'); // Hide wrapper if Firebase fails
+                telegramOnlyMessage.classList.remove('hidden');
+                document.getElementById('telegram-only-message').innerHTML = `
+                    <i class="fas fa-exclamation-triangle text-6xl text-red-400 mb-4"></i>
+                    <h2 class="text-2xl font-bold text-red-400 mb-4">Game Error</h2>
+                    <p class="text-lg text-gray-300">Failed to initialize game services. Please contact support.</p>
+                    <p class="text-md text-gray-400 mt-2">Error: ${error.message}</p>
+                `;
+            });
             throw error; // Stop further execution
         }
 
@@ -1042,6 +1049,39 @@
         }
 
         /**
+         * Handles the redemption process. (New)
+         */
+        async function handleRedeem() {
+            console.log("Redeem button clicked!");
+            if (gameState.isRedeemed) {
+                showMessage("Reward already redeemed!", 'info');
+                return;
+            }
+
+            const referralsMet = gameState.referredCount >= REDEEM_REQUIREMENTS.referrals;
+            const coinsMet = gameState.xp >= REDEEM_REQUIREMENTS.xp;
+
+            if (referralsMet && coinsMet) {
+                gameState.coins += REDEEM_REQUIREMENTS.reward;
+                gameState.xp += REDEEM_REQUIREMENTS.reward; // XP for redemption reward
+                gameState.isRedeemed = true;
+                showMessage(`Redeemed! You received ${REDEEM_REQUIREMENTS.reward.toLocaleString()} coins!`, 'success');
+                updateUI();
+                await saveGameState();
+                checkLevelUp();
+            } else {
+                let message = "You have not met all redemption requirements:";
+                if (!referralsMet) {
+                    message += ` Need ${REDEEM_REQUIREMENTS.referrals - gameState.referredCount} more referrals.`;
+                }
+                if (!coinsMet) {
+                    message += ` Need ${(REDEEM_REQUIREMENTS.xp - gameState.xp).toLocaleString()} more XP.`;
+                }
+                showMessage(message, 'error');
+            }
+        }
+
+        /**
          * Starts the energy regeneration and passive income loops.
          */
         function startGameLoops() {
@@ -1072,39 +1112,6 @@
             if (passiveIncomeInterval) {
                 clearInterval(passiveIncomeInterval);
                 passiveIncomeInterval = null;
-            }
-        }
-
-        /**
-         * Handles the redemption process. (New)
-         */
-        async function handleRedeem() {
-            console.log("Redeem button clicked!");
-            if (gameState.isRedeemed) {
-                showMessage("Reward already redeemed!", 'info');
-                return;
-            }
-
-            const referralsMet = gameState.referredCount >= REDEEM_REQUIREMENTS.referrals;
-            const coinsMet = gameState.xp >= REDEEM_REQUIREMENTS.xp;
-
-            if (referralsMet && coinsMet) {
-                gameState.coins += REDEEM_REQUIREMENTS.reward;
-                gameState.xp += REDEEM_REQUIREMENTS.reward; // XP for redemption reward
-                gameState.isRedeemed = true;
-                showMessage(`Redeemed! You received ${REDEEM_REQUIREMENTS.reward.toLocaleString()} coins!`, 'success');
-                updateUI();
-                await saveGameState();
-                checkLevelUp();
-            } else {
-                let message = "You have not met all redemption requirements:";
-                if (!referralsMet) {
-                    message += ` Need ${REDEEM_REQUIREMENTS.referrals - gameState.referredCount} more referrals.`;
-                }
-                if (!coinsMet) {
-                    message += ` Need ${(REDEEM_REQUIREMENTS.xp - gameState.xp).toLocaleString()} more XP.`;
-                }
-                showMessage(message, 'error');
             }
         }
 
@@ -1301,9 +1308,7 @@
         // Initial check for Telegram Web App on DOMContentLoaded
         document.addEventListener('DOMContentLoaded', () => {
             console.log("DOMContentLoaded fired. Initializing...");
-            loadingOverlay.classList.remove('hidden'); // Always show loading initially
-
-            // Assign UI elements after DOMContentLoaded
+            // Assign UI elements here to ensure they are available
             loadingOverlay = document.getElementById('loading-overlay');
             telegramOnlyMessage = document.getElementById('telegram-only-message');
             referralInputSection = document.getElementById('referral-input-section');
@@ -1373,6 +1378,9 @@
             navReferralsBtn = document.getElementById('nav-referrals-btn');
             navRedeemBtn = document.getElementById('nav-redeem-btn');
             navMembershipBtn = document.getElementById('nav-membership-btn');
+
+
+            loadingOverlay.classList.remove('hidden'); // Now safe to access
 
             // Attach Event Listeners after elements are assigned
             tapArea.addEventListener('touchstart', (event) => {
