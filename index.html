@@ -596,9 +596,9 @@
          */
         function recalculateHourlyProfit() {
             let totalProfit = 0;
-            for (const cardId in gameState.ownedCards) {
-                const level = gameState.ownedCards[cardId];
-                if (level > 0 && CARD_CONFIG[cardId]) {
+            for (const cardId in CARD_CONFIG) { // Iterate through all possible cards
+                const level = gameState.ownedCards[cardId] || 0; // Get level, default to 0 if not owned
+                if (level > 0) { // Only add profit if card is owned (level > 0)
                     totalProfit += calculateCardProfitPerHour(cardId, level);
                 }
             }
@@ -945,48 +945,34 @@
         upgradesBtn.addEventListener('click', (event) => { // Added event parameter
             event.preventDefault(); // Prevent default button behavior
             console.log("Upgrades button clicked!");
-            gameSection.classList.add('hidden');
-            miningSection.classList.add('hidden');
-            settingsSection.classList.add('hidden');
-            upgradesSection.classList.remove('hidden');
+            showSection(upgradesSection);
         });
         closeUpgradesBtn.addEventListener('click', (event) => { // Added event parameter
             event.preventDefault(); // Prevent default button behavior
             console.log("Closing upgrades section!");
-            upgradesSection.classList.add('hidden');
-            gameSection.classList.remove('hidden');
+            showSection(gameSection);
         });
 
         miningBtn.addEventListener('click', (event) => { // Added event parameter
             event.preventDefault(); // Prevent default button behavior
             console.log("Mining button clicked!");
-            gameSection.classList.add('hidden');
-            upgradesSection.classList.add('hidden');
-            settingsSection.classList.add('hidden');
-            miningSection.classList.remove('hidden');
-            updateUI();
+            showSection(miningSection);
         });
         closeMiningBtn.addEventListener('click', (event) => { // Added event parameter
             event.preventDefault(); // Prevent default button behavior
             console.log("Closing mining section!");
-            miningSection.classList.add('hidden');
-            gameSection.classList.remove('hidden');
+            showSection(gameSection);
         });
 
         settingsBtn.addEventListener('click', (event) => { // Added event parameter
             event.preventDefault(); // Prevent default button behavior
             console.log("Settings button clicked!");
-            gameSection.classList.add('hidden');
-            upgradesSection.classList.add('hidden');
-            miningSection.classList.add('hidden');
-            settingsSection.classList.remove('hidden');
-            updateUI(); // Ensure settings UI is updated
+            showSection(settingsSection);
         });
         closeSettingsBtn.addEventListener('click', (event) => { // Added event parameter
             event.preventDefault(); // Prevent default button behavior
             console.log("Closing settings section!");
-            settingsSection.classList.add('hidden');
-            gameSection.classList.remove('hidden');
+            showSection(gameSection);
         });
 
         claimProfitBtn.addEventListener('click', claimAccumulatedProfit);
@@ -1011,6 +997,23 @@
                 showMessage('Referral link not available yet.', 'info');
             }
         });
+
+        /**
+         * Helper function to show only one section and hide others.
+         * @param {HTMLElement} sectionToShow The section element to display.
+         */
+        function showSection(sectionToShow) {
+            console.log(`Attempting to show section: ${sectionToShow.id}`);
+            // Hide all main sections first
+            gameSection.classList.add('hidden');
+            upgradesSection.classList.add('hidden');
+            miningSection.classList.add('hidden');
+            settingsSection.classList.add('hidden');
+
+            // Then show the desired section
+            sectionToShow.classList.remove('hidden');
+            console.log(`Section ${sectionToShow.id} visibility: ${!sectionToShow.classList.contains('hidden')}`);
+        }
 
 
         /**
