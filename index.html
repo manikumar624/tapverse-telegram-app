@@ -392,7 +392,7 @@
 
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot, updateDoc, increment } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, onSnapshot, updateDoc, increment, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // UI Elements (Moved to top for early access)
         const loadingOverlay = document.getElementById('loading-overlay');
@@ -544,7 +544,8 @@
             referredBy: null, // userId of the referrer, if any
             referredCount: 0, // Number of users this player has successfully referred
             initialReferralBonusClaimed: false, // To ensure a user only gets the bonus once
-            isRedeemed: false // New: to track if redemption has been done
+            isRedeemed: false, // New: to track if redemption has been done
+            referralCode: null // New: Unique random referral code for this user
         };
 
         // Upgrade Costs and Increments (can be adjusted for game balance)
@@ -854,9 +855,9 @@
             }
 
             // Referral Link
-            if (userId) {
+            if (gameState.referralCode) { // Use gameState.referralCode
                 const currentUrl = window.location.origin + window.location.pathname;
-                referralLinkDisplay.textContent = `${currentUrl}?ref=${userId}`;
+                referralLinkDisplay.textContent = `${currentUrl}?ref=${gameState.referralCode}`;
             } else {
                 referralLinkDisplay.textContent = 'Loading...';
             }
@@ -1140,32 +1141,19 @@
         }
 
         /**
-         * Handles new user referral logic. (New)
-         * @param {string} referrerId The ID of the user who referred this new player.
+         * Generates a random alphanumeric code.
+         * @param {number} length The desired length of the code.
+         * @returns {string} The generated random code.
          */
-        async function handleReferral(referrerId) {
-            if (gameState.referredBy === null && !gameState.initialReferralBonusClaimed && referrerId && referrerId !== userId) {
-                console.log(`New user referred by: ${referrerId}. Granting bonus.`);
-                gameState.referredBy = referrerId;
-                gameState.coins += REFERRAL_BONUS_NEW_USER;
-                gameState.xp += REFERRAL_BONUS_NEW_USER; // XP for referral bonus
-                gameState.initialReferralBonusClaimed = true;
-                showMessage(`Welcome bonus! +${REFERRAL_BONUS_NEW_USER} coins for joining via a referral!`, 'success');
-
-                // Attempt to update referrer's count (requires 'if true' rule for now)
-                try {
-                    const referrerGameDataRef = doc(db, `artifacts/${appId}/users/${referrerId}/hamster_coin_game`, 'game_state');
-                    await updateDoc(referrerGameDataRef, {
-                        referredCount: increment(1)
-                    });
-                    console.log(`Referrer (${referrerId}) count incremented.`);
-                } catch (error) {
-                    console.warn(`Could not increment referrer (${referrerId}) count:`, error);
-                    showMessage("Could not update referrer's count (Firebase rules might be too strict or referrer doesn't exist).", 'info');
-                }
+        function generateRandomCode(length) {
+            const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let result = '';
+            const charactersLength = characters.length;
+            for (let i = 0; i < length; i++) {
+                result += characters.charAt(Math.floor(Math.random() * charactersLength));
             }
+            return result;
         }
-
 
         // Event Listeners for Main Game Buttons (now part of bottom nav)
         dailyRewardBtn.addEventListener('click', claimDailyReward);
@@ -1225,17 +1213,81 @@
 
             // Show the desired section by removing 'hidden' class
             sectionToShow.classList.remove('hidden');
-
-            // Update active state of bottom navigation buttons
-            document.querySelectorAll('.bottom-nav .nav-btn').forEach(btn => btn.classList.remove('active'));
-            if (sectionToShow === gameSection) navHomeBtn.classList.add('active');
-            else if (sectionToShow === upgradesSection) navUpgradesBtn.classList.add('active');
-            else if (sectionToShow === miningSection) navMinesBtn.classList.add('active');
-            else if (sectionToShow === referralsSection) navReferralsBtn.classList.add('active');
-            else if (sectionToShow === redeemSection) navRedeemBtn.classList.add('active');
-            else if (sectionToShow === membershipSection) navMembershipBtn.classList.add('active');
-
             console.log(`Section ${sectionToShow.id} visibility: ${!sectionToShow.classList.contains('hidden')}`);
+        }
+
+        /**
+         * Initializes a new user's game state after referral input (or no referral).
+         * @param {string|null} enteredReferralCode The referral code entered by the new user, or null if none.
+         */
+        async function initializeNewUserGame(enteredReferralCode) {
+            console.log(`Initializing new user game for ID: ${userId} with entered referral code: ${enteredReferralCode}`);
+            gameState.lastProfitCalculationTime = Date.now();
+            gameState.coinsPerTap = 1; // Base value for new user
+
+            // Generate a random referral code for the new user
+            gameState.referralCode = generateRandomCode(8); // 8-character random code
+
+            let referrerUserId = null;
+            if (enteredReferralCode) {
+                try {
+                    // Query Firestore to find the user with this referral code
+                    const usersRef = collection(db, `artifacts/${appId}/users`);
+                    const q = query(usersRef, where("referralCode", "==", enteredReferralCode));
+                    const querySnapshot = await getDocs(q);
+
+                    if (!querySnapshot.empty) {
+                        // Found the referrer
+                        referrerUserId = querySnapshot.docs[0].id; // Get the actual userId of the referrer
+                        console.log(`Referral code '${enteredReferralCode}' matched to referrer userId: ${referrerUserId}`);
+                        
+                        // Check if the referrer is not the new user themselves
+                        if (referrerUserId === userId) {
+                            showMessage("You cannot refer yourself!", 'error');
+                            referrerUserId = null; // Invalidate self-referral
+                        } else {
+                            gameState.referredBy = referrerUserId;
+                            gameState.coins += REFERRAL_BONUS_NEW_USER;
+                            gameState.xp += REFERRAL_BONUS_NEW_USER; // XP for referral bonus
+                            gameState.initialReferralBonusClaimed = true;
+                            showMessage(`Welcome bonus! +${REFERRAL_BONUS_NEW_USER} coins for joining via a referral!`, 'success');
+                            console.log(`New user bonus applied. Referred by: ${referrerUserId}`);
+                        }
+                    } else {
+                        showMessage("Invalid referral code entered.", 'error');
+                        console.warn(`Referral code '${enteredReferralCode}' not found.`);
+                    }
+                } catch (error) {
+                    console.error("Error looking up referrer by code:", error);
+                    showMessage("Error validating referral code. Please try again.", 'error');
+                }
+            }
+
+            await setDoc(gameDataRef, gameState)
+                .then(() => console.log("Initial game state set successfully."))
+                .catch(error => console.error("Error setting initial game state:", error));
+
+            // If a valid referrer exists, attempt to increment their count
+            if (referrerUserId) { // Use referrerUserId obtained from lookup
+                try {
+                    const referrerGameDataRef = doc(db, `artifacts/${appId}/users/${referrerUserId}/hamster_coin_game`, 'game_state');
+                    await updateDoc(referrerGameDataRef, {
+                        referredCount: increment(1)
+                    });
+                    console.log(`Referrer (${referrerUserId}) count incremented.`);
+                } catch (error) {
+                    console.warn(`Could not increment referrer (${referrerUserId}) count:`, error);
+                    showMessage("Could not update referrer's count (Firebase rules might be too strict or referrer doesn't exist).", 'info');
+                }
+            }
+
+            recalculateHourlyProfit();
+            updateUI();
+            showSection(gameSection); // Show the main game section
+            loadingOverlay.classList.add('hidden');
+            startGameLoops();
+            console.log("New game initialized and UI updated.");
+            checkLevelUp();
         }
 
 
@@ -1263,10 +1315,22 @@
                         gameState = {
                             ...gameState,
                             ...loadedState,
+                            // Ensure new fields are initialized if old data doesn't have them
+                            referralCode: loadedState.referralCode || generateRandomCode(8), // Generate if missing
+                            isRedeemed: loadedState.isRedeemed || false,
+                            referredBy: loadedState.referredBy || null,
+                            referredCount: loadedState.referredCount || 0,
+                            initialReferralBonusClaimed: loadedState.initialReferralBonusClaimed || false,
                             upgradeLevels: { ...loadedState.upgradeLevels || {} }, // Ensure nested objects are merged
                             ownedCards: { ...loadedState.ownedCards || {} } // Ensure nested objects are merged
                         };
                         console.log("Game state loaded/updated from Firestore:", gameState);
+
+                        // If referralCode was just generated for an old user, save it back
+                        if (!loadedState.referralCode) {
+                            await setDoc(gameDataRef, { referralCode: gameState.referralCode }, { merge: true });
+                            console.log("Generated and saved referralCode for existing user.");
+                        }
 
                         const now = Date.now();
                         const timeElapsedOffline = now - (gameState.lastProfitCalculationTime || now);
