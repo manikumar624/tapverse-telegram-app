@@ -140,60 +140,63 @@
         </a> -->
     </div>
 
-    <!-- Main Game Container (Initially hidden) -->
-    <div id="game-section" class="w-full max-w-md bg-gray-800 rounded-xl shadow-2xl p-6 flex flex-col items-center relative overflow-hidden hidden">
-        <!-- User ID Display -->
-        <div class="absolute top-4 left-4 text-xs text-gray-400">
+    <!-- Main Game Container (All sections are now children of this wrapper) -->
+    <div id="game-wrapper" class="w-full max-w-md bg-gray-800 rounded-xl shadow-2xl p-6 flex flex-col items-center relative overflow-hidden hidden">
+        <!-- User ID Display (Always visible) -->
+        <div class="absolute top-4 left-4 text-xs text-gray-400 z-10">
             User ID: <span id="user-id-display" class="font-mono">Loading...</span>
         </div>
 
-        <!-- Custom Logo (Bitcoin Icon) -->
-        <div id="logo-container" class="mb-4">
-            <i class="fab fa-bitcoin text-6xl text-yellow-500"></i>
-        </div>
+        <!-- Section for Main Game -->
+        <div id="game-section" class="w-full flex flex-col items-center hidden">
+            <!-- Custom Logo (Bitcoin Icon) -->
+            <div id="logo-container" class="mb-4">
+                <i class="fab fa-bitcoin text-6xl text-yellow-500"></i>
+            </div>
 
-        <!-- Coins Display -->
-        <div class="text-center mb-6">
-            <h1 class="text-5xl font-extrabold text-yellow-400 flex items-center justify-center">
-                <i class="fas fa-coins mr-3"></i> <span id="coins-display">0</span>
-            </h1>
-            <p class="text-md text-gray-400 mt-2">Total Coins</p>
-        </div>
+            <!-- Coins Display -->
+            <div class="text-center mb-6">
+                <h1 class="text-5xl font-extrabold text-yellow-400 flex items-center justify-center">
+                    <i class="fas fa-coins mr-3"></i> <span id="coins-display">0</span>
+                </h1>
+                <p class="text-md text-gray-400 mt-2">Total Coins</p>
+            </div>
 
-        <!-- Energy Bar -->
-        <div class="w-full bg-gray-700 rounded-full h-4 mb-8 relative">
-            <div id="energy-bar-fill" class="bg-gradient-to-r from-green-400 to-blue-500 h-full rounded-full energy-bar-fill" style="width: 100%;"></div>
-            <span id="energy-display" class="absolute inset-0 flex items-center justify-center text-xs font-semibold text-white">1000 / 1000</span>
-        </div>
+            <!-- Energy Bar -->
+            <div class="w-full bg-gray-700 rounded-full h-4 mb-8 relative">
+                <div id="energy-bar-fill" class="bg-gradient-to-r from-green-400 to-blue-500 h-full rounded-full energy-bar-fill" style="width: 100%;"></div>
+                <span id="energy-display" class="absolute inset-0 flex items-center justify-center text-xs font-semibold text-white">1000 / 1000</span>
+            </div>
 
-        <!-- Tap Button -->
-        <div id="tap-area" class="relative w-48 h-48 bg-gradient-to-br from-purple-600 to-indigo-800 rounded-full flex items-center justify-center cursor-pointer shadow-xl transform transition-transform duration-100 active:scale-95 mb-8 overflow-hidden">
-            <div class="absolute inset-0 bg-black opacity-20 rounded-full blur-xl"></div>
-            <i class="fas fa-hand-pointer text-7xl text-white animate-pulse"></i>
-            <span class="absolute text-xl font-bold text-white bottom-4">Tap to Earn!</span>
-        </div>
+            <!-- Tap Button -->
+            <div id="tap-area" class="relative w-48 h-48 bg-gradient-to-br from-purple-600 to-indigo-800 rounded-full flex items-center justify-center cursor-pointer shadow-xl transform transition-transform duration-100 active:scale-95 mb-8 overflow-hidden">
+                <div class="absolute inset-0 bg-black opacity-20 rounded-full blur-xl"></div>
+                <i class="fas fa-hand-pointer text-7xl text-white animate-pulse"></i>
+                <span class="absolute text-xl font-bold text-white bottom-4">Tap to Earn!</span>
+            </div>
 
-        <!-- Action Buttons -->
-        <div class="grid grid-cols-3 gap-4 w-full mb-6">
-            <button id="daily-reward-btn" class="btn-secondary py-3 px-4 rounded-xl font-bold text-lg flex items-center justify-center">
-                <i class="fas fa-gift mr-2"></i> Daily
+            <!-- Action Buttons -->
+            <div class="grid grid-cols-3 gap-4 w-full mb-6">
+                <button id="daily-reward-btn" class="btn-secondary py-3 px-4 rounded-xl font-bold text-lg flex items-center justify-center">
+                    <i class="fas fa-gift mr-2"></i> Daily
+                </button>
+                <button id="upgrades-btn" class="btn-tertiary py-3 px-4 rounded-xl font-bold text-lg flex items-center justify-center">
+                    <i class="fas fa-rocket mr-2"></i> Upgrades
+                </button>
+                <button id="mining-btn" class="btn-primary py-3 px-4 rounded-xl font-bold text-lg flex items-center justify-center">
+                    <i class="fas fa-hammer mr-2"></i> Mines
+                </button>
+            </div>
+
+            <!-- New Settings Button -->
+            <button id="settings-btn" class="btn-secondary w-full py-3 px-4 rounded-xl font-bold text-lg flex items-center justify-center mb-6">
+                <i class="fas fa-cog mr-2"></i> Settings
             </button>
-            <button id="upgrades-btn" class="btn-tertiary py-3 px-4 rounded-xl font-bold text-lg flex items-center justify-center">
-                <i class="fas fa-rocket mr-2"></i> Upgrades
-            </button>
-            <button id="mining-btn" class="btn-primary py-3 px-4 rounded-xl font-bold text-lg flex items-center justify-center">
-                <i class="fas fa-hammer mr-2"></i> Mines
-            </button>
         </div>
 
-        <!-- New Settings Button -->
-        <button id="settings-btn" class="btn-secondary w-full py-3 px-4 rounded-xl font-bold text-lg flex items-center justify-center mb-6">
-            <i class="fas fa-cog mr-2"></i> Settings
-        </button>
 
-
-        <!-- Upgrades Section (Initially Hidden) -->
-        <div id="upgrades-section" class="w-full hidden bg-gray-700 p-4 rounded-xl shadow-inner mt-4">
+        <!-- Upgrades Section -->
+        <div id="upgrades-section" class="w-full flex flex-col items-center hidden">
             <h2 class="text-2xl font-bold text-center mb-4 text-yellow-300">Boost Your Tapping!</h2>
 
             <!-- Tap Power Upgrade -->
@@ -234,8 +237,8 @@
             </button>
         </div>
 
-        <!-- Mining Section (Initially Hidden) -->
-        <div id="mining-section" class="w-full hidden bg-gray-700 p-4 rounded-xl shadow-inner mt-4">
+        <!-- Mining Section -->
+        <div id="mining-section" class="w-full flex flex-col items-center hidden">
             <h2 class="text-2xl font-bold text-center mb-4 text-purple-300">Passive Income!</h2>
 
             <div class="flex justify-between items-center bg-gray-800 p-4 rounded-lg mb-4 shadow-md">
@@ -257,8 +260,8 @@
             </button>
         </div>
 
-        <!-- Settings Section (New, Initially Hidden) -->
-        <div id="settings-section" class="w-full hidden bg-gray-700 p-4 rounded-xl shadow-inner mt-4">
+        <!-- Settings Section (New) -->
+        <div id="settings-section" class="w-full flex flex-col items-center hidden">
             <h2 class="text-2xl font-bold text-center mb-4 text-blue-300"><i class="fas fa-cog mr-2"></i> Game Settings</h2>
 
             <!-- Levels Sub-section -->
@@ -308,6 +311,7 @@
         // UI Elements (Moved to top for early access)
         const loadingOverlay = document.getElementById('loading-overlay');
         const telegramOnlyMessage = document.getElementById('telegram-only-message');
+        const gameWrapper = document.getElementById('game-wrapper'); // New wrapper element
         const gameSection = document.getElementById('game-section');
         const userIdDisplay = document.getElementById('user-id-display');
         const coinsDisplay = document.getElementById('coins-display');
@@ -388,7 +392,7 @@
         } catch (error) {
             console.error("Firebase initialization failed:", error);
             loadingOverlay.classList.add('hidden');
-            gameSection.classList.add('hidden');
+            gameWrapper.classList.add('hidden'); // Hide wrapper if Firebase fails
             telegramOnlyMessage.classList.remove('hidden');
             document.getElementById('telegram-only-message').innerHTML = `
                 <i class="fas fa-exclamation-triangle text-6xl text-red-400 mb-4"></i>
@@ -1005,8 +1009,9 @@
         function showSection(sectionToShow) {
             console.log(`Attempting to show section: ${sectionToShow.id}`);
             // Hide all main sections first
+            // Ensure all sections are correctly referenced and hidden
             gameSection.classList.add('hidden');
-            gameSection.style.display = 'none'; // Explicitly hide
+            gameSection.style.display = 'none'; 
 
             upgradesSection.classList.add('hidden');
             upgradesSection.style.display = 'none';
