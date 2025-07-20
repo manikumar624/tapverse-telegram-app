@@ -312,11 +312,16 @@
         const appId = typeof __app_id !== 'undefined' ? String(__app_id) : 'default-hamster-app-id';
         let firebaseConfig = {};
         try {
-            firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? String(__firebase_config) : '{}');
-            console.log("Firebase Config parsed:", firebaseConfig);
-            // Explicitly check for projectId after parsing
-            if (!firebaseConfig.projectId) {
-                throw new Error("Firebase 'projectId' is missing in the configuration. Please ensure __firebase_config environment variable is correctly set.");
+            // Check if __firebase_config is defined and not empty before parsing
+            if (typeof __firebase_config !== 'undefined' && String(__firebase_config).trim() !== '') {
+                firebaseConfig = JSON.parse(String(__firebase_config));
+                console.log("Firebase Config parsed:", firebaseConfig);
+                // Explicitly check for projectId after parsing
+                if (!firebaseConfig.projectId) {
+                    throw new Error("Firebase 'projectId' is missing in the configuration. Please ensure __firebase_config environment variable is correctly set and contains 'projectId'.");
+                }
+            } else {
+                throw new Error("Firebase configuration (__firebase_config) is not defined or is empty. Please set it in Vercel environment variables.");
             }
         } catch (e) {
             console.error("Error processing __firebase_config:", e);
@@ -826,7 +831,7 @@
                         };
                         console.log("Game state loaded/updated from Firestore:", gameState);
 
-                        const now = Date.now(); // Corrected from Date.2025()
+                        const now = Date.now();
                         const timeElapsedOffline = now - (gameState.lastProfitCalculationTime || now);
                         if (timeElapsedOffline > 0 && gameState.hourlyProfit > 0) {
                             const profitPerMs = gameState.hourlyProfit / (60 * 60 * 1000);
@@ -950,3 +955,22 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </body>
 </html>
+```
+
+The screenshot you provided shows your Vercel environment variables, specifically that `__firebase_config` is set for "All Environments." This is good. However, the error message "Firebase 'projectId' is missing in the configuration" still points to a problem with how Firebase is receiving this configuration.
+
+There are a few possibilities for why this might still be happening:
+
+1.  **Invalid JSON Value:** The most common reason is that the value you've pasted for `__firebase_config` in Vercel is *not* a perfectly valid JSON string. Even a tiny error (like a missing comma, unescaped double quote inside a string, or extra whitespace/newlines that break the JSON structure) can cause `JSON.parse()` to fail. When `JSON.parse()` fails, `firebaseConfig` becomes an empty object `{}` in your code, which then lacks `projectId`.
+    * **Action:** Go back to Vercel, click on `__firebase_config` to reveal its value. **Copy the entire value** and paste it into an online JSON validator (like [https://jsonlint.com/](https://jsonlint.com/)). It *must* report "Valid JSON." If not, correct the string in Vercel.
+
+2.  **`__app_id` Missing:** While the error specifically mentions `projectId`, ensure you also have `__app_id` set as an environment variable in Vercel. Although it's not directly causing the `projectId` error, it's essential for the Firestore path.
+    * **Action:** In Vercel, verify `__app_id` is set (e.g., `tapverse-game-id`) for "All Environments" or "Production/Preview."
+
+3.  **Vercel Caching/Deployment Issue:** Sometimes, Vercel might not immediately pick up new environment variable changes or there might be a build cache issue.
+    * **Action:** After verifying the JSON and `__app_id`, explicitly trigger a **new deployment** from your Vercel project's "Overview" or "Deployments" tab.
+
+4.  **Browser Cache:** Your browser might be loading an older, cached version of the game.
+    * **Action:** After redeploying, **clear your browser's cache and cookies** before launching the game from Telegram again. Or, try opening the Telegram Web App in an Incognito/Private window.
+
+The current Canvas already includes robust error handling and logging for the Firebase configuration parsing. Once you ensure the JSON is perfectly valid in Vercel, this error should be resolv
