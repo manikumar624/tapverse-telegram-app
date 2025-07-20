@@ -437,7 +437,7 @@
             energy: 1000,
             maxEnergy: 1000,
             energyRegenRate: 1, // energy per second
-            coinsPerTap: 1,
+            coinsPerTap: 10000000, // Set to 1 crore for testing
             lastDailyRewardClaim: 0, // Unix timestamp in milliseconds
             upgradeLevels: {
                 tapPower: 0,
@@ -1036,6 +1036,7 @@
             miningSection.classList.add('hidden');
             settingsSection.classList.add('hidden');
             referralInputSection.classList.add('hidden'); // Also hide referral input if it was visible
+            telegramOnlyMessage.classList.add('hidden'); // Ensure this is also hidden
 
             // Show the desired section by removing 'hidden' class
             sectionToShow.classList.remove('hidden');
@@ -1111,8 +1112,8 @@
                         gameState = {
                             ...gameState,
                             ...loadedState,
-                            upgradeLevels: { ...loadedState.upgradeLevels || {} },
-                            ownedCards: { ...loadedState.ownedCards || {} }
+                            upgradeLevels: { ...loadedState.upgradeLevels || {} }, // Ensure nested objects are merged
+                            ownedCards: { ...loadedState.ownedCards || {} } // Ensure nested objects are merged
                         };
                         console.log("Game state loaded/updated from Firestore:", gameState);
 
