@@ -265,7 +265,7 @@
         }
 
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Global variables for Firebase config and app ID
@@ -273,9 +273,29 @@
         const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? String(__firebase_config) : '{}');
 
         // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
+        let app;
+        let db;
+        let auth;
+
+        try {
+            app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+            console.log("Firebase initialized successfully.");
+        } catch (error) {
+            console.error("Firebase initialization failed:", error);
+            showMessage("Failed to initialize game services. Please try again later.", 'error');
+            // Hide loading and show error message if Firebase init fails
+            loadingOverlay.classList.add('hidden');
+            telegramOnlyMessage.classList.remove('hidden'); // Or a more specific error message
+            document.getElementById('telegram-only-message').innerHTML = `
+                <i class="fas fa-exclamation-triangle text-6xl text-red-400 mb-4"></i>
+                <h2 class="text-2xl font-bold text-red-400 mb-4">Game Error</h2>
+                <p class="text-lg text-gray-300">Failed to load game services. Please contact support.</p>
+                <p class="text-md text-gray-400 mt-2">Error: ${error.message}</p>
+            `;
+            throw error; // Stop further execution
+        }
 
         let userId = null;
         let gameDataRef = null;
@@ -767,42 +787,63 @@
                 unsubscribeSnapshot = null;
             }
 
-            unsubscribeSnapshot = onSnapshot(gameDataRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    const loadedState = docSnap.data();
-                    gameState = {
-                        ...gameState,
-                        ...loadedState,
-                        upgradeLevels: { ...gameState.upgradeLevels, ...(loadedState.upgradeLevels || {}) },
-                        ownedCards: { ...gameState.ownedCards, ...(loadedState.ownedCards || {}) }
-                    };
-                    console.log("Game state loaded/updated from Firestore:", gameState);
+            try {
+                unsubscribeSnapshot = onSnapshot(gameDataRef, (docSnap) => {
+                    if (docSnap.exists()) {
+                        const loadedState = docSnap.data();
+                        gameState = {
+                            ...gameState,
+                            ...loadedState,
+                            upgradeLevels: { ...gameState.upgradeLevels, ...(loadedState.upgradeLevels || {}) },
+                            ownedCards: { ...gameState.ownedCards, ...(loadedState.ownedCards || {}) }
+                        };
+                        console.log("Game state loaded/updated from Firestore:", gameState);
 
-                    const now = Date.now();
-                    const timeElapsedOffline = now - (gameState.lastProfitCalculationTime || now);
-                    if (timeElapsedOffline > 0 && gameState.hourlyProfit > 0) {
-                        const profitPerMs = gameState.hourlyProfit / (60 * 60 * 1000);
-                        const offlineProfit = profitPerMs * timeElapsedOffline;
-                        gameState.accumulatedProfit += offlineProfit;
-                        showMessage(`Welcome back! You earned ${Math.floor(offlineProfit)} coins while away.`, 'info');
+                        const now = Date.now();
+                        const timeElapsedOffline = now - (gameState.lastProfitCalculationTime || now);
+                        if (timeElapsedOffline > 0 && gameState.hourlyProfit > 0) {
+                            const profitPerMs = gameState.hourlyProfit / (60 * 60 * 1000);
+                            const offlineProfit = profitPerMs * timeElapsedOffline;
+                            gameState.accumulatedProfit += offlineProfit;
+                            showMessage(`Welcome back! You earned ${Math.floor(offlineProfit)} coins while away.`, 'info');
+                        }
+                        gameState.lastProfitCalculationTime = now;
+                    } else {
+                        console.log("No game state found, initializing new game.");
+                        gameState.lastProfitCalculationTime = Date.now();
+                        setDoc(gameDataRef, gameState); // Create initial state for new user
                     }
-                    gameState.lastProfitCalculationTime = now;
-                } else {
-                    console.log("No game state found, initializing new game.");
-                    gameState.lastProfitCalculationTime = Date.now();
-                    setDoc(gameDataRef, gameState);
-                }
-                recalculateHourlyProfit();
-                updateUI();
-                gameSection.classList.remove('hidden'); // Show game
-                telegramOnlyMessage.classList.add('hidden'); // Hide message
+                    recalculateHourlyProfit();
+                    updateUI();
+                    gameSection.classList.remove('hidden'); // Show game
+                    telegramOnlyMessage.classList.add('hidden'); // Hide message
+                    loadingOverlay.classList.add('hidden');
+                    startGameLoops(); // Start game loops only after data is ready
+                }, (error) => {
+                    console.error("Error listening to game state:", error);
+                    showMessage("Error loading game data. Please check your internet connection.", 'error');
+                    loadingOverlay.classList.add('hidden');
+                    // Show generic error message if data loading fails
+                    telegramOnlyMessage.classList.remove('hidden');
+                    document.getElementById('telegram-only-message').innerHTML = `
+                        <i class="fas fa-exclamation-triangle text-6xl text-red-400 mb-4"></i>
+                        <h2 class="text-2xl font-bold text-red-400 mb-4">Data Loading Error</h2>
+                        <p class="text-lg text-gray-300">Could not load your game data. Please try again later.</p>
+                        <p class="text-md text-gray-400 mt-2">Error: ${error.message}</p>
+                    `;
+                });
+            } catch (error) {
+                console.error("Error setting up Firestore listener:", error);
+                showMessage("Failed to set up game data listener. Please try again.", 'error');
                 loadingOverlay.classList.add('hidden');
-                startGameLoops(); // Start game loops only after data is ready
-            }, (error) => {
-                console.error("Error listening to game state:", error);
-                showMessage("Error loading game data.", 'error');
-                loadingOverlay.classList.add('hidden');
-            });
+                telegramOnlyMessage.classList.remove('hidden');
+                document.getElementById('telegram-only-message').innerHTML = `
+                    <i class="fas fa-exclamation-triangle text-6xl text-red-400 mb-4"></i>
+                    <h2 class="text-2xl font-bold text-red-400 mb-4">Game Setup Error</h2>
+                    <p class="text-lg text-gray-300">An error occurred during game setup. Please try again later.</p>
+                    <p class="text-md text-gray-400 mt-2">Error: ${error.message}</p>
+                `;
+            }
         }
 
         // Event Listeners for Game
@@ -836,11 +877,13 @@
         document.addEventListener('DOMContentLoaded', () => {
             loadingOverlay.classList.remove('hidden'); // Always show loading initially
 
+            // Check if Telegram WebApp object is available and has user data
             if (typeof window.Telegram !== 'undefined' && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
-                // If in Telegram WebApp, get Telegram ID and load data
+                console.log("Telegram WebApp detected and user data available.");
                 const telegramUserId = `telegram_${window.Telegram.WebApp.initDataUnsafe.user.id}`;
                 loadGameData(telegramUserId);
             } else {
+                console.warn("Not in Telegram WebApp or user data not available. Displaying restriction message.");
                 // Not in Telegram WebApp, show message and hide game
                 loadingOverlay.classList.add('hidden');
                 gameSection.classList.add('hidden');
