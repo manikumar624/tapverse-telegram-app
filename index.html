@@ -127,7 +127,7 @@
             left: -250px; /* Hidden by default */
             width: 250px;
             height: 100%;
-            background-color: #1a202c; /* Darker background for sidebar */
+            background: linear-gradient(180deg, #1a202c, #2d3748); /* Darker background with subtle gradient */
             z-index: 50; /* Above everything else */
             transition: left 0.3s ease-in-out;
             box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
@@ -158,10 +158,16 @@
             font-weight: 600;
             cursor: pointer;
             transition: background-color 0.2s ease, color 0.2s ease;
+            border-left: 4px solid transparent; /* For active indicator */
         }
         .sidebar-nav-item:hover {
             background-color: #2d3748;
             color: #e2e8f0;
+        }
+        .sidebar-nav-item.active {
+            background-color: #3182ce; /* Blue background for active */
+            color: #ffffff; /* White text for active */
+            border-left-color: #4299E1; /* Blue border for active */
         }
         .sidebar-nav-item i {
             font-size: 1.25rem;
@@ -170,6 +176,38 @@
     </style>
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col items-center p-4">
+
+    <!-- Sidebar Overlay -->
+    <div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+    <!-- Sidebar Menu -->
+    <div id="sidebar" class="sidebar flex flex-col">
+        <div class="p-4 text-gray-100 text-lg font-bold">Menu</div>
+        <button id="sidebar-nav-home-btn" class="sidebar-nav-item active">
+            <i class="fas fa-home"></i> Home
+        </button>
+        <button id="sidebar-nav-upgrades-btn" class="sidebar-nav-item">
+            <i class="fas fa-rocket"></i> Upgrades
+        </button>
+        <button id="sidebar-nav-mines-btn" class="sidebar-nav-item">
+            <i class="fas fa-hammer"></i> Mines
+        </button>
+        <button id="sidebar-nav-referrals-btn" class="sidebar-nav-item">
+            <i class="fas fa-users"></i> Referrals
+        </button>
+        <button id="sidebar-nav-redeem-btn" class="sidebar-nav-item">
+            <i class="fas fa-gift"></i> Redeem
+        </button>
+        <button id="sidebar-nav-membership-btn" class="sidebar-nav-item">
+            <i class="fas fa-gem"></i> Membership
+        </button>
+        <button id="sidebar-nav-dashboard-btn" class="sidebar-nav-item">
+            <i class="fas fa-chart-bar"></i> Dashboard
+        </button>
+        <button id="sidebar-nav-settings-btn" class="sidebar-nav-item">
+            <i class="fas fa-cog"></i> Settings
+        </button>
+    </div>
 
     <!-- Loading Overlay -->
     <div id="loading-overlay" class="fixed inset-0 bg-red-900 bg-opacity-95 flex items-center justify-center z-50">
@@ -190,11 +228,7 @@
         <h2 class="text-2xl font-bold text-yellow-400 mb-4">Game Access Restricted</h2>
         <p class="text-lg text-gray-300">This game can only be played through our official Telegram bot.</p>
         <p class="text-md text-gray-400 mt-2">Please open it via the bot's menu button.</p>
-        <!-- You can add a link to your bot here if you know its full t.me link -->
-        <!-- <a href="https://t.me/YourBotUsername" target="_blank" class="mt-6 btn-secondary py-3 px-6 rounded-xl font-bold text-lg">
-            Go to Telegram Bot
-        </a> -->
-    </div>
+        </div>
 
     <!-- Referral/Username Input Section (New, hidden by default) -->
     <div id="new-player-setup-section" class="w-full max-w-md bg-gray-800 rounded-xl shadow-2xl p-6 flex flex-col items-center justify-center min-h-[400px] text-center hidden">
@@ -386,7 +420,6 @@
                         </tr>
                     </thead>
                     <tbody id="leaderboard-list">
-                        <!-- Leaderboard rows will be inserted here by JavaScript -->
                         <tr><td colspan="3" class="text-center py-4 text-gray-400">Loading leaderboard...</td></tr>
                     </tbody>
                 </table>
@@ -424,27 +457,6 @@
             </button>
         </div>
     </div>
-
-    <nav class="bottom-nav">
-        <button id="nav-home-btn" class="nav-btn active">
-            <i class="fas fa-home"></i> Home
-        </button>
-        <button id="nav-upgrades-btn" class="nav-btn">
-            <i class="fas fa-rocket"></i> Upgrades
-        </button>
-        <button id="nav-mines-btn" class="nav-btn">
-            <i class="fas fa-hammer"></i> Mines
-        </button>
-        <button id="nav-referrals-btn" class="nav-btn">
-            <i class="fas fa-users"></i> Referrals
-        </button>
-        <button id="nav-redeem-btn" class="nav-btn">
-            <i class="fas fa-gift"></i> Redeem
-        </button>
-        <button id="nav-membership-btn" class="nav-btn">
-            <i class="fas fa-gem"></i> Membership
-        </button>
-    </nav>
 
     <script type="module">
         // Telegram Web Apps SDK
@@ -569,13 +581,13 @@
         let navDashboardBtn; // New
         let navSettingsBtn; // New
 
-        let usernameInput; // New
-        let saveUsernameBtn; // New
-        let leaderboardList; // New
+        let usernameInput;
+        let saveUsernameBtn;
+        let leaderboardList;
 
-        let hamburgerMenuBtn; // New sidebar button
-        let sidebar; // Sidebar element
-        let sidebarOverlay; // Overlay for sidebar
+        let hamburgerMenuBtn;
+        let sidebar;
+        let sidebarOverlay;
 
 
         // Global variables for Firebase config and app ID
@@ -607,21 +619,8 @@
         } catch (error) {
             console.error("Firebase initialization failed:", error);
             // Fallback UI for Firebase init failure
-            // Ensure elements are available before trying to manipulate them
-            document.addEventListener('DOMContentLoaded', () => { // Moved this block inside DOMContentLoaded
-                loadingOverlay = document.getElementById('loading-overlay');
-                telegramOnlyMessage = document.getElementById('telegram-only-message');
-                gameWrapper = document.getElementById('game-wrapper');
-                loadingOverlay.classList.add('hidden');
-                gameWrapper.classList.add('hidden'); // Hide wrapper if Firebase fails
-                telegramOnlyMessage.classList.remove('hidden');
-                document.getElementById('telegram-only-message').innerHTML = `
-                    <i class="fas fa-exclamation-triangle text-6xl text-red-400 mb-4"></i>
-                    <h2 class="text-2xl font-bold text-red-400 mb-4">Game Error</h2>
-                    <p class="text-lg text-gray-300">Failed to initialize game services. Please contact support.</p>
-                    <p class="text-md text-gray-400 mt-2">Error: ${error.message}</p>
-                `;
-            });
+            // This needs to be called after UI elements are assigned in DOMContentLoaded
+            // This part will now be handled inside DOMContentLoaded block
             throw error; // Stop further execution
         }
 
@@ -879,9 +878,9 @@
          * Updates the UI elements based on the current game state.
          */
         function updateUI() {
-            coinsDisplay.textContent = Math.floor(gameState.coins);
-            energyDisplay.textContent = `${Math.floor(gameState.energy)} / ${Math.floor(gameState.maxEnergy)}`;
-            energyBarFill.style.width = `${(gameState.energy / gameState.maxEnergy) * 100}%`;
+            if (coinsDisplay) coinsDisplay.textContent = Math.floor(gameState.coins);
+            if (energyDisplay) energyDisplay.textContent = `${Math.floor(gameState.energy)} / ${Math.floor(gameState.maxEnergy)}`;
+            if (energyBarFill) energyBarFill.style.width = `${(gameState.energy / gameState.maxEnergy) * 100}%`;
 
             // Update upgrade section UI
             if (tapPowerLevel) tapPowerLevel.textContent = `(Lv. ${gameState.upgradeLevels.tapPower})`;
@@ -948,8 +947,8 @@
                     // Add event listener for the buy button
                     if (!isMaxLevel && !isLocked) {
                         const buyButton = cardElement.querySelector(`#buy-card-${cardId}`);
-                        buyButton.disabled = gameState.coins < nextCost;
-                        buyButton.addEventListener('click', () => purchaseCard(cardId));
+                        if (buyButton) buyButton.disabled = gameState.coins < nextCost;
+                        if (buyButton) buyButton.addEventListener('click', () => purchaseCard(cardId));
                     }
                 }
             }
@@ -1394,10 +1393,15 @@
                         console.log("Game state loaded/updated from Firestore:", gameState);
 
                         // If referralCode or username was just generated/missing for an old user, save it back
-                        if (!loadedState.referralCode || !loadedState.username) {
-                            await setDoc(gameDataRef, { referralCode: gameState.referralCode, username: gameState.username }, { merge: true });
-                            console.log("Generated and saved referralCode/username for existing user.");
+                        if (!loadedState.referralCode) { // Only save if referralCode was generated
+                            await setDoc(gameDataRef, { referralCode: gameState.referralCode }, { merge: true });
+                            console.log("Generated and saved referralCode for existing user.");
                         }
+                        if (!loadedState.username) { // Only save if username was generated
+                            await setDoc(gameDataRef, { username: gameState.username }, { merge: true });
+                            console.log("Generated and saved username for existing user.");
+                        }
+
 
                         const now = Date.now();
                         const timeElapsedOffline = now - (gameState.lastProfitCalculationTime || now);
