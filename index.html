@@ -190,7 +190,11 @@
         <h2 class="text-2xl font-bold text-yellow-400 mb-4">Game Access Restricted</h2>
         <p class="text-lg text-gray-300">This game can only be played through our official Telegram bot.</p>
         <p class="text-md text-gray-400 mt-2">Please open it via the bot's menu button.</p>
-        </div>
+        <!-- You can add a link to your bot here if you know its full t.me link -->
+        <!-- <a href="https://t.me/YourBotUsername" target="_blank" class="mt-6 btn-secondary py-3 px-6 rounded-xl font-bold text-lg">
+            Go to Telegram Bot
+        </a> -->
+    </div>
 
     <!-- Referral/Username Input Section (New, hidden by default) -->
     <div id="new-player-setup-section" class="w-full max-w-md bg-gray-800 rounded-xl shadow-2xl p-6 flex flex-col items-center justify-center min-h-[400px] text-center hidden">
@@ -400,7 +404,7 @@
             <div class="bg-gray-800 p-4 rounded-lg mb-4 shadow-md w-full">
                 <h3 class="font-semibold text-xl text-yellow-400 mb-2"><i class="fas fa-user-edit mr-2"></i> Change Username</h3>
                 <input type="text" id="username-input" placeholder="New Username" class="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4">
-                <button id="save-username-btn" class="btn-primary w-full py-3 px-4 rounded-xl font-bold text-lg">
+                <button id="save-username-btn" class="btn-primary w-full py-3 px-4 rounded-lg text-sm font-bold">
                     Save Username
                 </button>
             </div>
@@ -547,6 +551,10 @@
         let usernameInput; // New
         let saveUsernameBtn; // New
         let leaderboardList; // New
+
+        let hamburgerMenuBtn; // New sidebar button
+        let sidebar; // Sidebar element
+        let sidebarOverlay; // Overlay for sidebar
 
 
         // Global variables for Firebase config and app ID
@@ -1394,7 +1402,7 @@
                             initialReferralCodeInput.disabled = true; // Disable referral input
                             initialUsernameInput.placeholder = 'Enter your Username'; // Adjust placeholder
                             startNewGameBtn.textContent = 'Save Username & Start';
-                            startGameBtn.onclick = () => {
+                            startNewGameBtn.onclick = () => { // Re-assign onclick for this specific flow
                                 const enteredUsername = initialUsernameInput.value.trim();
                                 if (enteredUsername) {
                                     gameState.username = enteredUsername;
@@ -1609,54 +1617,67 @@
             saveUsernameBtn = document.getElementById('save-username-btn');
             leaderboardList = document.getElementById('leaderboard-list');
 
+            hamburgerMenuBtn = document.getElementById('hamburger-menu-btn');
+            sidebar = document.getElementById('sidebar');
+            sidebarOverlay = document.getElementById('sidebar-overlay');
+
 
             loadingOverlay.classList.remove('hidden'); // Now safe to access
 
             // Attach Event Listeners after elements are assigned
-            tapArea.addEventListener('touchstart', (event) => {
-                event.preventDefault(); // Prevent default browser touch behavior (like scrolling/zooming)
-                // Handle each touch individually
-                for (let i = 0; i < event.touches.length; i++) {
-                    // Pass the individual touch object to handleTap
-                    handleTap(event.touches[i]);
-                }
-            });
+            if (tapArea) { // Defensive check
+                tapArea.addEventListener('touchstart', (event) => {
+                    event.preventDefault(); // Prevent default browser touch behavior (like scrolling/zooming)
+                    // Handle each touch individually
+                    for (let i = 0; i < event.touches.length; i++) {
+                        // Pass the individual touch object to handleTap
+                        handleTap(event.touches[i]);
+                    }
+                });
+            } else {
+                console.error("tapArea element not found!");
+            }
 
-            dailyRewardBtn.addEventListener('click', claimDailyReward);
+
+            if (dailyRewardBtn) dailyRewardBtn.addEventListener('click', claimDailyReward);
 
             // Sidebar/Navigation button listeners
-            document.getElementById('hamburger-menu-btn').addEventListener('click', () => {
-                document.getElementById('sidebar').classList.toggle('open');
-                document.getElementById('sidebar-overlay').classList.toggle('visible');
-            });
-            document.getElementById('sidebar-overlay').addEventListener('click', () => {
-                document.getElementById('sidebar').classList.remove('open');
-                document.getElementById('sidebar-overlay').classList.remove('visible');
-            });
+            if (hamburgerMenuBtn) {
+                hamburgerMenuBtn.addEventListener('click', () => {
+                    if (sidebar) sidebar.classList.toggle('open');
+                    if (sidebarOverlay) sidebarOverlay.classList.toggle('visible');
+                });
+            }
+            if (sidebarOverlay) {
+                sidebarOverlay.addEventListener('click', () => {
+                    if (sidebar) sidebar.classList.remove('open');
+                    if (sidebarOverlay) sidebarOverlay.classList.remove('visible');
+                });
+            }
 
-            navHomeBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Home clicked!"); showSection(gameSection); document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebar-overlay').classList.remove('visible'); });
-            navUpgradesBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Upgrades clicked!"); showSection(upgradesSection); document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebar-overlay').classList.remove('visible'); });
-            navMinesBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Mines clicked!"); showSection(miningSection); document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebar-overlay').classList.remove('visible'); });
-            navReferralsBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Referrals clicked!"); showSection(referralsSection); document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebar-overlay').classList.remove('visible'); });
-            navRedeemBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Redeem clicked!"); showSection(redeemSection); updateUI(); document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebar-overlay').classList.remove('visible'); });
-            navMembershipBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Membership clicked!"); showSection(membershipSection); document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebar-overlay').classList.remove('visible'); });
-            navDashboardBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Dashboard clicked!"); showSection(dashboardSection); document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebar-overlay').classList.remove('visible'); });
-            navSettingsBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Settings clicked!"); showSection(settingsSection); updateUI(); document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebar-overlay').classList.remove('visible'); });
+            if (navHomeBtn) navHomeBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Home clicked!"); showSection(gameSection); if(sidebar) sidebar.classList.remove('open'); if(sidebarOverlay) sidebarOverlay.classList.remove('visible'); });
+            if (navUpgradesBtn) navUpgradesBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Upgrades clicked!"); showSection(upgradesSection); if(sidebar) sidebar.classList.remove('open'); if(sidebarOverlay) sidebarOverlay.classList.remove('visible'); });
+            if (navMinesBtn) navMinesBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Mines clicked!"); showSection(miningSection); if(sidebar) sidebar.classList.remove('open'); if(sidebarOverlay) sidebarOverlay.classList.remove('visible'); });
+            if (navReferralsBtn) navReferralsBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Referrals clicked!"); showSection(referralsSection); if(sidebar) sidebar.classList.remove('open'); if(sidebarOverlay) sidebarOverlay.classList.remove('visible'); });
+            if (navRedeemBtn) navRedeemBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Redeem clicked!"); showSection(redeemSection); updateUI(); if(sidebar) sidebar.classList.remove('open'); if(sidebarOverlay) sidebarOverlay.classList.remove('visible'); });
+            if (navMembershipBtn) navMembershipBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Membership clicked!"); showSection(membershipSection); if(sidebar) sidebar.classList.remove('open'); if(sidebarOverlay) sidebarOverlay.classList.remove('visible'); });
+            if (navDashboardBtn) navDashboardBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Dashboard clicked!"); showSection(dashboardSection); if(sidebar) sidebar.classList.remove('open'); if(sidebarOverlay) sidebarOverlay.classList.remove('visible'); });
+            if (navSettingsBtn) navSettingsBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Settings clicked!"); showSection(settingsSection); updateUI(); if(sidebar) sidebar.classList.remove('open'); if(sidebarOverlay) sidebarOverlay.classList.remove('visible'); });
 
 
-            closeUpgradesBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Closing upgrades section!"); showSection(gameSection); });
-            closeMiningBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Closing mining section!"); showSection(gameSection); });
-            closeReferralsBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Closing referrals section!"); showSection(gameSection); });
-            closeRedeemBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Closing redeem section!"); showSection(gameSection); });
-            closeMembershipBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Closing membership section!"); showSection(gameSection); });
-            closeDashboardBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Closing dashboard section!"); showSection(gameSection); });
-            closeSettingsBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Closing settings section!"); showSection(gameSection); });
+            if (closeUpgradesBtn) closeUpgradesBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Closing upgrades section!"); showSection(gameSection); });
+            if (closeMiningBtn) closeMiningBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Closing mining section!"); showSection(gameSection); });
+            if (closeReferralsBtn) closeReferralsBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Closing referrals section!"); showSection(gameSection); });
+            if (closeRedeemBtn) closeRedeemBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Closing redeem section!"); showSection(gameSection); });
+            if (closeMembershipBtn) closeMembershipBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Closing membership section!"); showSection(gameSection); });
+            if (closeDashboardBtn) closeDashboardBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Closing dashboard section!"); showSection(gameSection); });
+            if (closeSettingsBtn) closeSettingsBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Closing settings section!"); showSection(gameSection); });
 
-            claimProfitBtn.addEventListener('click', claimAccumulatedProfit);
-            upgradeTapPowerBtn.addEventListener('click', () => purchaseUpgrade('tapPower'));
-            upgradeEnergyCapacityBtn.addEventListener('click', () => purchaseUpgrade('energyCapacity'));
-            upgradeEnergyRegenBtn.addEventListener('click', () => purchaseUpgrade('energyRegen'));
-            copyReferralLinkBtn.addEventListener('click', () => {
+            if (claimProfitBtn) claimProfitBtn.addEventListener('click', claimAccumulatedProfit);
+            if (upgradeTapPowerBtn) upgradeTapPowerBtn.addEventListener('click', () => purchaseUpgrade('tapPower'));
+            if (upgradeEnergyCapacityBtn) upgradeEnergyCapacityBtn.addEventListener('click', () => purchaseUpgrade('energyCapacity'));
+            if (upgradeEnergyRegenBtn) upgradeEnergyRegenBtn.addEventListener('click', () => purchaseUpgrade('energyRegen'));
+            if (copyReferralLinkBtn) copyReferralLinkBtn.addEventListener('click', () => {
                 const referralLink = referralLinkDisplay.textContent;
                 if (referralLink && referralLink !== 'Loading referral link...') {
                     const tempInput = document.createElement('textarea');
@@ -1670,8 +1691,8 @@
                     showMessage('Referral link not available yet.', 'info');
                 }
             });
-            redeemCoinsBtn.addEventListener('click', handleRedeem);
-            saveUsernameBtn.addEventListener('click', saveUsername); // New listener for saving username
+            if (redeemCoinsBtn) redeemCoinsBtn.addEventListener('click', handleRedeem);
+            if (saveUsernameBtn) saveUsernameBtn.addEventListener('click', saveUsername); // New listener for saving username
 
 
             // Check if Telegram WebApp object is available and has user data
