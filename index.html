@@ -120,45 +120,58 @@
             100% { opacity: 0; transform: translateY(-50px); }
         }
 
-        /* Fixed bottom navigation bar */
-        .bottom-nav {
+        /* Sidebar styles */
+        .sidebar {
             position: fixed;
-            bottom: 0;
+            top: 0;
+            left: -250px; /* Hidden by default */
+            width: 250px;
+            height: 100%;
+            background-color: #1a202c; /* Darker background for sidebar */
+            z-index: 50; /* Above everything else */
+            transition: left 0.3s ease-in-out;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
+            padding-top: 60px; /* Space for header if any */
+        }
+        .sidebar.open {
+            left: 0; /* Slide in */
+        }
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
             left: 0;
             width: 100%;
-            background-color: #1a202c; /* Darker background for nav */
-            border-top: 1px solid #2d3748; /* Subtle border */
-            z-index: 40; /* Above game content but below messages */
-            display: flex;
-            justify-content: space-around;
-            padding: 0.5rem 0;
-            box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.3);
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 49; /* Below sidebar, above game content */
+            display: none;
         }
-        .nav-btn {
+        .sidebar-overlay.visible {
+            display: block;
+        }
+        .sidebar-nav-item {
             display: flex;
-            flex-direction: column;
             align-items: center;
-            justify-content: center;
-            padding: 0.5rem;
-            color: #a0aec0; /* Lighter gray for inactive */
-            font-size: 0.75rem;
+            padding: 1rem 1.5rem;
+            color: #a0aec0;
+            font-size: 1rem;
             font-weight: 600;
-            transition: color 0.2s ease;
+            cursor: pointer;
+            transition: background-color 0.2s ease, color 0.2s ease;
         }
-        .nav-btn:hover {
-            color: #e2e8f0; /* White on hover */
+        .sidebar-nav-item:hover {
+            background-color: #2d3748;
+            color: #e2e8f0;
         }
-        .nav-btn.active {
-            color: #4299E1; /* Blue for active */
-        }
-        .nav-btn i {
-            font-size: 1.5rem;
-            margin-bottom: 0.25rem;
+        .sidebar-nav-item i {
+            font-size: 1.25rem;
+            margin-right: 1rem;
         }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col items-center p-4">
 
+    <!-- Loading Overlay -->
     <div id="loading-overlay" class="fixed inset-0 bg-red-900 bg-opacity-95 flex items-center justify-center z-50">
         <div class="text-center">
             <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-green-500 mx-auto"></div>
@@ -166,10 +179,12 @@
         </div>
     </div>
 
+    <!-- Message Box -->
     <div id="message-box" class="fixed top-4 left-1/2 -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-lg shadow-lg z-50 hidden">
         <p id="message-text"></p>
     </div>
 
+    <!-- Telegram-only access message -->
     <div id="telegram-only-message" class="w-full max-w-md bg-gray-800 rounded-xl shadow-2xl p-6 flex flex-col items-center justify-center min-h-[400px] text-center hidden">
         <i class="fab fa-telegram-plane text-6xl text-blue-400 mb-4"></i>
         <h2 class="text-2xl font-bold text-yellow-400 mb-4">Game Access Restricted</h2>
@@ -177,25 +192,36 @@
         <p class="text-md text-gray-400 mt-2">Please open it via the bot's menu button.</p>
         </div>
 
-    <div id="referral-input-section" class="w-full max-w-md bg-gray-800 rounded-xl shadow-2xl p-6 flex flex-col items-center justify-center min-h-[400px] text-center hidden">
-        <h2 class="text-3xl font-bold text-center mb-6 text-yellow-400">Welcome!</h2>
-        <p class="text-center text-gray-300 mb-4">Are you joining via a referral?</p>
-        <input type="text" id="referral-code-input" placeholder="Enter referral code (optional)" class="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4">
-        <button id="start-game-btn" class="btn-primary w-full py-3 px-4 rounded-xl font-bold text-lg">
+    <!-- Referral/Username Input Section (New, hidden by default) -->
+    <div id="new-player-setup-section" class="w-full max-w-md bg-gray-800 rounded-xl shadow-2xl p-6 flex flex-col items-center justify-center min-h-[400px] text-center hidden">
+        <h2 class="text-3xl font-bold text-center mb-6 text-yellow-400">Welcome to Crypto Tap!</h2>
+        <p class="text-center text-gray-300 mb-4">Let's get you set up.</p>
+        <input type="text" id="initial-username-input" placeholder="Choose a Username" class="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4">
+        <input type="text" id="initial-referral-code-input" placeholder="Enter referral code (optional)" class="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4">
+        <button id="start-new-game-btn" class="btn-primary w-full py-3 px-4 rounded-xl font-bold text-lg">
             Start Game
         </button>
     </div>
 
+    <!-- Main Game Container (All sections are now children of this wrapper) -->
     <div id="game-wrapper" class="w-full max-w-md bg-gray-800 rounded-xl shadow-2xl p-6 relative overflow-hidden" style="min-height: 500px;">
-        <div class="absolute top-4 left-4 text-xs text-gray-400 z-10">
+        <!-- Hamburger Menu Icon -->
+        <div id="hamburger-menu-btn" class="absolute top-4 left-4 text-2xl text-gray-300 cursor-pointer z-20">
+            <i class="fas fa-bars"></i>
+        </div>
+        <!-- User ID Display (Always visible) -->
+        <div class="absolute top-4 right-4 text-xs text-gray-400 z-10">
             User ID: <span id="user-id-display" class="font-mono">Loading...</span>
         </div>
 
+        <!-- Section for Main Game -->
         <div id="game-section" class="w-full flex flex-col items-center hidden">
+            <!-- Custom Logo (Bitcoin Icon) -->
             <div id="logo-container" class="mb-4">
                 <i class="fab fa-bitcoin text-6xl text-yellow-500"></i>
             </div>
 
+            <!-- Coins Display -->
             <div class="text-center mb-6">
                 <h1 class="text-5xl font-extrabold text-yellow-400 flex items-center justify-center">
                     <i class="fas fa-coins mr-3"></i> <span id="coins-display">0</span>
@@ -203,11 +229,13 @@
                 <p class="text-md text-gray-400 mt-2">Total Coins</p>
             </div>
 
+            <!-- Energy Bar -->
             <div class="w-full bg-gray-700 rounded-full h-4 mb-8 relative">
                 <div id="energy-bar-fill" class="bg-gradient-to-r from-green-400 to-blue-500 h-full rounded-full energy-bar-fill" style="width: 100%;"></div>
                 <span id="energy-display" class="absolute inset-0 flex items-center justify-center text-xs font-semibold text-white">1000 / 1000</span>
             </div>
 
+            <!-- Tap Button -->
             <div id="tap-area" class="relative w-48 h-48 bg-gradient-to-br from-purple-600 to-indigo-800 rounded-full flex items-center justify-center cursor-pointer shadow-xl transform transition-transform duration-100 active:scale-95 mb-8 overflow-hidden">
                 <div class="absolute inset-0 bg-black opacity-20 rounded-full blur-xl"></div>
                 <i class="fas fa-hand-pointer text-7xl text-white animate-pulse"></i>
@@ -220,9 +248,11 @@
         </div>
 
 
+        <!-- Upgrades Section -->
         <div id="upgrades-section" class="w-full flex flex-col items-center hidden">
             <h2 class="text-2xl font-bold text-center mb-4 text-yellow-300">Boost Your Tapping!</h2>
 
+            <!-- Tap Power Upgrade -->
             <div class="flex items-center justify-between bg-gray-800 p-4 rounded-lg mb-3 shadow-md">
                 <div>
                     <h3 class="font-semibold text-lg text-green-400"><i class="fas fa-fist-raised mr-2"></i> Tap Power <span id="tap-power-level">(Lv. 0)</span></h3>
@@ -233,6 +263,7 @@
                 </button>
             </div>
 
+            <!-- Energy Capacity Upgrade -->
             <div class="flex items-center justify-between bg-gray-800 p-4 rounded-lg mb-3 shadow-md">
                 <div>
                     <h3 class="font-semibold text-lg text-blue-400"><i class="fas fa-battery-full mr-2"></i> Energy Capacity <span id="energy-capacity-level">(Lv. 0)</span></h3>
@@ -243,6 +274,7 @@
                 </button>
             </div>
 
+            <!-- Energy Regeneration Upgrade -->
             <div class="flex items-center justify-between bg-gray-800 p-4 rounded-lg mb-3 shadow-md">
                 <div>
                     <h3 class="font-semibold text-lg text-red-400"><i class="fas fa-charging-station mr-2"></i> Energy Regen <span id="energy-regen-level">(Lv. 0)</span></h3>
@@ -258,6 +290,7 @@
             </button>
         </div>
 
+        <!-- Mining Section -->
         <div id="mining-section" class="w-full flex flex-col items-center hidden">
             <h2 class="text-2xl font-bold text-center mb-4 text-purple-300">Passive Income!</h2>
 
@@ -279,6 +312,7 @@
             </button>
         </div>
 
+        <!-- Referrals Section (Moved and Enhanced) -->
         <div id="referrals-section" class="w-full flex flex-col items-center hidden">
             <h2 class="text-2xl font-bold text-center mb-4 text-green-300"><i class="fas fa-users mr-2"></i> Refer & Earn!</h2>
 
@@ -299,6 +333,7 @@
             </button>
         </div>
 
+        <!-- Redeem Section (New) -->
         <div id="redeem-section" class="w-full flex flex-col items-center hidden">
             <h2 class="text-2xl font-bold text-center mb-4 text-purple-300"><i class="fas fa-trophy mr-2"></i> Redeem Rewards</h2>
 
@@ -320,6 +355,7 @@
             </button>
         </div>
 
+        <!-- Membership Section (New) -->
         <div id="membership-section" class="w-full flex flex-col items-center hidden">
             <h2 class="text-2xl font-bold text-center mb-4 text-blue-300"><i class="fas fa-gem mr-2"></i> Membership Prices</h2>
 
@@ -332,28 +368,58 @@
                 <i class="fas fa-arrow-left mr-2"></i> Back
             </button>
         </div>
-    </div>
 
-    <nav class="bottom-nav">
-        <button id="nav-home-btn" class="nav-btn active">
-            <i class="fas fa-home"></i> Home
-        </button>
-        <button id="nav-upgrades-btn" class="nav-btn">
-            <i class="fas fa-rocket"></i> Upgrades
-        </button>
-        <button id="nav-mines-btn" class="nav-btn">
-            <i class="fas fa-hammer"></i> Mines
-        </button>
-        <button id="nav-referrals-btn" class="nav-btn">
-            <i class="fas fa-users"></i> Referrals
-        </button>
-        <button id="nav-redeem-btn" class="nav-btn">
-            <i class="fas fa-gift"></i> Redeem
-        </button>
-        <button id="nav-membership-btn" class="nav-btn">
-            <i class="fas fa-gem"></i> Membership
-        </button>
-    </nav>
+        <!-- Dashboard Section (New) -->
+        <div id="dashboard-section" class="w-full flex flex-col items-center hidden">
+            <h2 class="text-2xl font-bold text-center mb-4 text-yellow-300"><i class="fas fa-chart-bar mr-2"></i> Top 1000 Players</h2>
+            <div class="bg-gray-800 p-4 rounded-lg shadow-md w-full max-h-96 overflow-y-auto">
+                <table class="w-full text-left table-auto">
+                    <thead>
+                        <tr class="bg-gray-700">
+                            <th class="px-4 py-2 rounded-tl-lg">Rank</th>
+                            <th class="px-4 py-2">Username</th>
+                            <th class="px-4 py-2 rounded-tr-lg text-right">XP</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboard-list">
+                        <!-- Leaderboard rows will be inserted here by JavaScript -->
+                        <tr><td colspan="3" class="text-center py-4 text-gray-400">Loading leaderboard...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <button id="close-dashboard-btn" class="btn-secondary w-full py-3 px-4 rounded-xl font-bold text-lg mt-4">
+                <i class="fas fa-arrow-left mr-2"></i> Back
+            </button>
+        </div>
+
+        <!-- Settings Section (Updated) -->
+        <div id="settings-section" class="w-full flex flex-col items-center hidden">
+            <h2 class="text-2xl font-bold text-center mb-4 text-blue-300"><i class="fas fa-cog mr-2"></i> Settings</h2>
+
+            <!-- Username Change Sub-section -->
+            <div class="bg-gray-800 p-4 rounded-lg mb-4 shadow-md w-full">
+                <h3 class="font-semibold text-xl text-yellow-400 mb-2"><i class="fas fa-user-edit mr-2"></i> Change Username</h3>
+                <input type="text" id="username-input" placeholder="New Username" class="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4">
+                <button id="save-username-btn" class="btn-primary w-full py-3 px-4 rounded-xl font-bold text-lg">
+                    Save Username
+                </button>
+            </div>
+
+            <!-- Levels Sub-section (Moved from main settings) -->
+            <div class="bg-gray-800 p-4 rounded-lg mb-4 shadow-md w-full">
+                <h3 class="font-semibold text-xl text-yellow-400 mb-2"><i class="fas fa-star mr-2"></i> Your Level: <span id="player-level-display">1</span></h3>
+                <p class="text-sm text-gray-300">XP (Total Coins Earned): <span id="player-xp-display">0</span> / <span id="next-level-xp-display">1000</span></p>
+                <div class="w-full bg-gray-700 rounded-full h-2 mt-2">
+                    <div id="xp-progress-bar" class="bg-gradient-to-r from-yellow-400 to-orange-500 h-full rounded-full" style="width: 0%;"></div>
+                </div>
+                <p id="level-reward-info" class="text-sm text-gray-400 mt-2">Next reward: <span id="next-level-reward-display"></span> coins!</p>
+            </div>
+
+            <button id="close-settings-btn" class="btn-secondary w-full py-3 px-4 rounded-xl font-bold text-lg mt-4">
+                <i class="fas fa-arrow-left mr-2"></i> Back
+            </button>
+        </div>
+    </div>
 
     <script type="module">
         // Telegram Web Apps SDK
@@ -367,7 +433,7 @@
 
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot, updateDoc, increment, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, onSnapshot, updateDoc, increment, collection, query, where, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Helper function to show only one section and hide others.
         // Defined at the top level to ensure it's always available.
@@ -380,30 +446,33 @@
             referralsSection.classList.add('hidden');
             redeemSection.classList.add('hidden');
             membershipSection.classList.add('hidden');
-            referralInputSection.classList.add('hidden'); // Also hide referral input if it was visible
+            dashboardSection.classList.add('hidden'); // New
+            settingsSection.classList.add('hidden'); // New
+            newPlayerSetupSection.classList.add('hidden'); // New
             telegramOnlyMessage.classList.add('hidden'); // Ensure this is also hidden
 
             // Show the desired section by removing 'hidden' class
             sectionToShow.classList.remove('hidden');
             console.log(`Section ${sectionToShow.id} visibility: ${!sectionToShow.classList.contains('hidden')}`);
 
-            // Update active state of bottom navigation buttons
-            document.querySelectorAll('.bottom-nav .nav-btn').forEach(btn => btn.classList.remove('active'));
-            if (sectionToShow === gameSection) navHomeBtn.classList.add('active');
-            else if (sectionToShow === upgradesSection) navUpgradesBtn.classList.add('active');
-            else if (sectionToShow === miningSection) navMinesBtn.classList.add('active');
-            else if (sectionToShow === referralsSection) navReferralsBtn.classList.add('active');
-            else if (sectionToShow === redeemSection) navRedeemBtn.classList.add('active');
-            else if (sectionToShow === membershipSection) navMembershipBtn.classList.add('active');
+            // Special handling for Dashboard to refresh data
+            if (sectionToShow === dashboardSection) {
+                fetchLeaderboard();
+            }
         }
 
 
         // UI Elements (Declared with let and assigned in DOMContentLoaded)
         let loadingOverlay;
         let telegramOnlyMessage;
-        let referralInputSection;
+        let referralInputSection; // Old referral input
         let referralCodeInput;
         let startGameBtn;
+
+        let newPlayerSetupSection; // New initial setup screen
+        let initialUsernameInput;
+        let initialReferralCodeInput;
+        let startNewGameBtn;
 
         let gameWrapper;
         let gameSection;
@@ -419,12 +488,16 @@
         let referralsSection;
         let redeemSection;
         let membershipSection;
+        let dashboardSection; // New
+        let settingsSection; // New
         
         let closeUpgradesBtn;
         let closeMiningBtn;
         let closeReferralsBtn;
         let closeRedeemBtn;
         let closeMembershipBtn;
+        let closeDashboardBtn; // New
+        let closeSettingsBtn; // New
         
         let messageBox;
         let messageText;
@@ -468,6 +541,12 @@
         let navReferralsBtn;
         let navRedeemBtn;
         let navMembershipBtn;
+        let navDashboardBtn; // New
+        let navSettingsBtn; // New
+
+        let usernameInput; // New
+        let saveUsernameBtn; // New
+        let leaderboardList; // New
 
 
         // Global variables for Firebase config and app ID
@@ -547,7 +626,8 @@
             referredCount: 0, // Number of users this player has successfully referred
             initialReferralBonusClaimed: false, // To ensure a user only gets the bonus once
             isRedeemed: false, // New: to track if redemption has been done
-            referralCode: null // New: Unique random referral code for this user
+            referralCode: null, // New: Unique random referral code for this user
+            username: null // New: User's chosen username
         };
 
         const ONE_CRORE_COINS = 10000000; // Define 1 crore for clarity
@@ -902,6 +982,9 @@
                     }
                 }
             }
+
+            // Update Username in Settings
+            if (usernameInput) usernameInput.value = gameState.username || '';
         }
 
         /**
@@ -1171,11 +1254,13 @@
         /**
          * Initializes a new user's game state after referral input (or no referral).
          * @param {string|null} enteredReferralCode The referral code entered by the new user, or null if none.
+         * @param {string} newUsername The username entered by the new user.
          */
-        async function initializeNewUserGame(enteredReferralCode) {
-            console.log(`Initializing new user game for ID: ${userId} with entered referral code: ${enteredReferralCode}`);
+        async function initializeNewUserGame(enteredReferralCode, newUsername) {
+            console.log(`Initializing new user game for ID: ${userId} with username: ${newUsername} and entered referral code: ${enteredReferralCode}`);
             gameState.lastProfitCalculationTime = Date.now();
             gameState.coinsPerTap = 1; // Base value for new user
+            gameState.username = newUsername; // Set username for new user
 
             // Generate a random referral code for the new user
             gameState.referralCode = generateRandomCode(8); // 8-character random code
@@ -1273,15 +1358,16 @@
                             referredBy: loadedState.referredBy || null,
                             referredCount: loadedState.referredCount || 0,
                             initialReferralBonusClaimed: loadedState.initialReferralBonusClaimed || false,
+                            username: loadedState.username || null, // Initialize username
                             upgradeLevels: { ...loadedState.upgradeLevels || {} }, // Ensure nested objects are merged
                             ownedCards: { ...loadedState.ownedCards || {} } // Ensure nested objects are merged
                         };
                         console.log("Game state loaded/updated from Firestore:", gameState);
 
-                        // If referralCode was just generated for an old user, save it back
-                        if (!loadedState.referralCode) {
-                            await setDoc(gameDataRef, { referralCode: gameState.referralCode }, { merge: true });
-                            console.log("Generated and saved referralCode for existing user.");
+                        // If referralCode or username was just generated/missing for an old user, save it back
+                        if (!loadedState.referralCode || !loadedState.username) {
+                            await setDoc(gameDataRef, { referralCode: gameState.referralCode, username: gameState.username }, { merge: true });
+                            console.log("Generated and saved referralCode/username for existing user.");
                         }
 
                         const now = Date.now();
@@ -1299,22 +1385,48 @@
 
                         recalculateHourlyProfit();
                         updateUI();
-                        showSection(gameSection); // Explicitly show game section after loading
-                        loadingOverlay.classList.add('hidden'); // Hide loading overlay
-                        startGameLoops(); // Start game loops only after data is ready
-                        console.log("Game loaded and UI updated.");
-                        checkLevelUp(); // Check level up on game load
+                        // If username is missing for an existing user, prompt them to set it
+                        if (!gameState.username) {
+                            console.log("Existing user has no username, prompting for setup.");
+                            loadingOverlay.classList.add('hidden');
+                            showSection(newPlayerSetupSection); // Re-use new player setup for username
+                            initialReferralCodeInput.value = ''; // Clear referral code for existing user
+                            initialReferralCodeInput.disabled = true; // Disable referral input
+                            initialUsernameInput.placeholder = 'Enter your Username'; // Adjust placeholder
+                            startNewGameBtn.textContent = 'Save Username & Start';
+                            startGameBtn.onclick = () => {
+                                const enteredUsername = initialUsernameInput.value.trim();
+                                if (enteredUsername) {
+                                    gameState.username = enteredUsername;
+                                    saveGameState(); // Save the new username
+                                    showSection(gameSection); // Proceed to game
+                                } else {
+                                    showMessage("Please enter a username.", 'error');
+                                }
+                            };
+                        } else {
+                            showSection(gameSection); // Explicitly show game section after loading
+                            loadingOverlay.classList.add('hidden'); // Hide loading overlay
+                            startGameLoops(); // Start game loops only after data is ready
+                            console.log("Game loaded and UI updated.");
+                            checkLevelUp(); // Check level up on game load
+                        }
 
                     } else {
-                        // New user: Show referral input screen
-                        console.log("No game state found in Firestore, new user. Showing referral input.");
+                        // New user: Show referral/username input screen
+                        console.log("No game state found in Firestore, new user. Showing setup input.");
                         loadingOverlay.classList.add('hidden');
-                        showSection(referralInputSection); // Show referral input section
+                        showSection(newPlayerSetupSection); // Show new player setup section
                         
                         // Attach event listener for the Start Game button on the referral screen
-                        startGameBtn.onclick = () => {
-                            const enteredReferralCode = referralCodeInput.value.trim();
-                            initializeNewUserGame(enteredReferralCode || null); // Pass null if empty
+                        startNewGameBtn.onclick = () => {
+                            const enteredUsername = initialUsernameInput.value.trim();
+                            if (!enteredUsername) {
+                                showMessage("Please choose a username.", 'error');
+                                return;
+                            }
+                            const enteredReferralCode = initialReferralCodeInput.value.trim();
+                            initializeNewUserGame(enteredReferralCode || null, enteredUsername); // Pass username
                         };
                     }
                 }, (error) => {
@@ -1343,15 +1455,85 @@
             }
         }
 
+        // Function to fetch and display leaderboard (New)
+        async function fetchLeaderboard() {
+            if (!leaderboardList) {
+                console.warn("Leaderboard list element not found.");
+                return;
+            }
+            leaderboardList.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-gray-400">Loading leaderboard...</td></tr>';
+            try {
+                const usersCollectionRef = collection(db, `artifacts/${appId}/users`);
+                // Order by xp descending, limit to 1000 players
+                const q = query(usersCollectionRef, orderBy("hamster_coin_game.xp", "desc"), limit(1000));
+                const querySnapshot = await getDocs(q);
+
+                if (querySnapshot.empty) {
+                    leaderboardList.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-gray-400">No players on the leaderboard yet.</td></tr>';
+                    return;
+                }
+
+                let rank = 1;
+                leaderboardList.innerHTML = ''; // Clear loading message
+                querySnapshot.forEach((doc) => {
+                    const playerData = doc.data().hamster_coin_game; // Access nested game_state
+                    if (playerData && playerData.username && playerData.xp !== undefined) {
+                        const row = `
+                            <tr class="${rank % 2 === 0 ? 'bg-gray-700' : 'bg-gray-800'}">
+                                <td class="px-4 py-2">${rank}.</td>
+                                <td class="px-4 py-2">${playerData.username}</td>
+                                <td class="px-4 py-2 text-right">${Math.floor(playerData.xp).toLocaleString()}</td>
+                            </tr>
+                        `;
+                        leaderboardList.innerHTML += row;
+                        rank++;
+                    }
+                });
+            } catch (error) {
+                console.error("Error fetching leaderboard:", error);
+                leaderboardList.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-red-400">Error loading leaderboard: ${error.message}</td></tr>`;
+                showMessage("Failed to load leaderboard.", 'error');
+            }
+        }
+
+        // Event listener for saving username (New)
+        async function saveUsername() {
+            const newUsername = usernameInput.value.trim();
+            if (!newUsername) {
+                showMessage("Username cannot be empty!", 'error');
+                return;
+            }
+            if (newUsername === gameState.username) {
+                showMessage("Username is already the same.", 'info');
+                return;
+            }
+
+            try {
+                await updateDoc(gameDataRef, { username: newUsername });
+                gameState.username = newUsername; // Update local state
+                showMessage("Username updated successfully!", 'success');
+                updateUI(); // Refresh UI with new username
+            } catch (error) {
+                console.error("Error updating username:", error);
+                showMessage(`Failed to update username: ${error.message}`, 'error');
+            }
+        }
+
+
         // Initial check for Telegram Web App on DOMContentLoaded
         document.addEventListener('DOMContentLoaded', () => {
             console.log("DOMContentLoaded fired. Initializing...");
-            // Assign UI elements here to ensure they are available
+            // Assign ALL UI elements here to ensure they are available before any logic runs
             loadingOverlay = document.getElementById('loading-overlay');
             telegramOnlyMessage = document.getElementById('telegram-only-message');
             referralInputSection = document.getElementById('referral-input-section');
             referralCodeInput = document.getElementById('referral-code-input');
             startGameBtn = document.getElementById('start-game-btn');
+
+            newPlayerSetupSection = document.getElementById('new-player-setup-section');
+            initialUsernameInput = document.getElementById('initial-username-input');
+            initialReferralCodeInput = document.getElementById('initial-referral-code-input');
+            startNewGameBtn = document.getElementById('start-new-game-btn');
 
             gameWrapper = document.getElementById('game-wrapper');
             gameSection = document.getElementById('game-section');
@@ -1367,12 +1549,16 @@
             referralsSection = document.getElementById('referrals-section');
             redeemSection = document.getElementById('redeem-section');
             membershipSection = document.getElementById('membership-section');
+            dashboardSection = document.getElementById('dashboard-section');
+            settingsSection = document.getElementById('settings-section');
             
             closeUpgradesBtn = document.getElementById('close-upgrades-btn');
             closeMiningBtn = document.getElementById('close-mining-btn');
             closeReferralsBtn = document.getElementById('close-referrals-btn');
             closeRedeemBtn = document.getElementById('close-redeem-btn');
             closeMembershipBtn = document.getElementById('close-membership-btn');
+            closeDashboardBtn = document.getElementById('close-dashboard-btn');
+            closeSettingsBtn = document.getElementById('close-settings-btn');
             
             messageBox = document.getElementById('message-box');
             messageText = document.getElementById('message-text');
@@ -1416,6 +1602,12 @@
             navReferralsBtn = document.getElementById('nav-referrals-btn');
             navRedeemBtn = document.getElementById('nav-redeem-btn');
             navMembershipBtn = document.getElementById('nav-membership-btn');
+            navDashboardBtn = document.getElementById('nav-dashboard-btn');
+            navSettingsBtn = document.getElementById('nav-settings-btn');
+
+            usernameInput = document.getElementById('username-input');
+            saveUsernameBtn = document.getElementById('save-username-btn');
+            leaderboardList = document.getElementById('leaderboard-list');
 
 
             loadingOverlay.classList.remove('hidden'); // Now safe to access
@@ -1432,18 +1624,33 @@
 
             dailyRewardBtn.addEventListener('click', claimDailyReward);
 
-            navHomeBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Home clicked!"); showSection(gameSection); });
-            navUpgradesBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Upgrades clicked!"); showSection(upgradesSection); });
-            navMinesBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Mines clicked!"); showSection(miningSection); });
-            navReferralsBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Referrals clicked!"); showSection(referralsSection); });
-            navRedeemBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Redeem clicked!"); showSection(redeemSection); updateUI(); });
-            navMembershipBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Membership clicked!"); showSection(membershipSection); });
+            // Sidebar/Navigation button listeners
+            document.getElementById('hamburger-menu-btn').addEventListener('click', () => {
+                document.getElementById('sidebar').classList.toggle('open');
+                document.getElementById('sidebar-overlay').classList.toggle('visible');
+            });
+            document.getElementById('sidebar-overlay').addEventListener('click', () => {
+                document.getElementById('sidebar').classList.remove('open');
+                document.getElementById('sidebar-overlay').classList.remove('visible');
+            });
+
+            navHomeBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Home clicked!"); showSection(gameSection); document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebar-overlay').classList.remove('visible'); });
+            navUpgradesBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Upgrades clicked!"); showSection(upgradesSection); document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebar-overlay').classList.remove('visible'); });
+            navMinesBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Mines clicked!"); showSection(miningSection); document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebar-overlay').classList.remove('visible'); });
+            navReferralsBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Referrals clicked!"); showSection(referralsSection); document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebar-overlay').classList.remove('visible'); });
+            navRedeemBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Redeem clicked!"); showSection(redeemSection); updateUI(); document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebar-overlay').classList.remove('visible'); });
+            navMembershipBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Membership clicked!"); showSection(membershipSection); document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebar-overlay').classList.remove('visible'); });
+            navDashboardBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Dashboard clicked!"); showSection(dashboardSection); document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebar-overlay').classList.remove('visible'); });
+            navSettingsBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Settings clicked!"); showSection(settingsSection); updateUI(); document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebar-overlay').classList.remove('visible'); });
+
 
             closeUpgradesBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Closing upgrades section!"); showSection(gameSection); });
             closeMiningBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Closing mining section!"); showSection(gameSection); });
             closeReferralsBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Closing referrals section!"); showSection(gameSection); });
             closeRedeemBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Closing redeem section!"); showSection(gameSection); });
             closeMembershipBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Closing membership section!"); showSection(gameSection); });
+            closeDashboardBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Closing dashboard section!"); showSection(gameSection); });
+            closeSettingsBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Closing settings section!"); showSection(gameSection); });
 
             claimProfitBtn.addEventListener('click', claimAccumulatedProfit);
             upgradeTapPowerBtn.addEventListener('click', () => purchaseUpgrade('tapPower'));
@@ -1464,6 +1671,7 @@
                 }
             });
             redeemCoinsBtn.addEventListener('click', handleRedeem);
+            saveUsernameBtn.addEventListener('click', saveUsername); // New listener for saving username
 
 
             // Check if Telegram WebApp object is available and has user data
