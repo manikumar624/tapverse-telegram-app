@@ -474,7 +474,7 @@
 
         // Helper function to show only one section and hide others.
         // Defined at the top level to ensure it's always available.
-        function showSection(sectionToShow) {
+        window.showSection = function(sectionToShow) { // Made showSection global
             console.log(`Attempting to show section: ${sectionToShow.id}`);
             // Hide all main sections by adding 'hidden' class
             gameSection.classList.add('hidden');
@@ -1348,7 +1348,7 @@
 
             recalculateHourlyProfit();
             updateUI();
-            showSection(gameSection); // Show the main game section
+            window.showSection(gameSection); // Show the main game section
             loadingOverlay.classList.add('hidden');
             startGameLoops();
             console.log("New game initialized and UI updated.");
@@ -1422,7 +1422,7 @@
                         if (!gameState.username) {
                             console.log("Existing user has no username, prompting for setup.");
                             loadingOverlay.classList.add('hidden');
-                            showSection(newPlayerSetupSection); // Re-use new player setup for username
+                            window.showSection(newPlayerSetupSection); // Re-use new player setup for username
                             initialReferralCodeInput.value = ''; // Clear referral code for existing user
                             initialReferralCodeInput.disabled = true; // Disable referral input
                             initialUsernameInput.placeholder = 'Enter your Username'; // Adjust placeholder
@@ -1432,13 +1432,13 @@
                                 if (enteredUsername) {
                                     gameState.username = enteredUsername;
                                     saveGameState(); // Save the new username
-                                    showSection(gameSection); // Proceed to game
+                                    window.showSection(gameSection); // Proceed to game
                                 } else {
                                     showMessage("Please enter a username.", 'error');
                                 }
                             };
                         } else {
-                            showSection(gameSection); // Explicitly show game section after loading
+                            window.showSection(gameSection); // Explicitly show game section after loading
                             loadingOverlay.classList.add('hidden'); // Hide loading overlay
                             startGameLoops(); // Start game loops only after data is ready
                             console.log("Game loaded and UI updated.");
@@ -1449,7 +1449,7 @@
                         // New user: Show referral/username input screen
                         console.log("No game state found in Firestore, new user. Showing setup input.");
                         loadingOverlay.classList.add('hidden');
-                        showSection(newPlayerSetupSection); // Show new player setup section
+                        window.showSection(newPlayerSetupSection); // Show new player setup section
                         
                         // Attach event listener for the Start Game button on the referral screen
                         startNewGameBtn.onclick = () => {
