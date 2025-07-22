@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Crypto Tap Game</title>
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         /* Custom scrollbar for better aesthetics */
@@ -177,10 +175,8 @@
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col items-center p-4">
 
-    <!-- Sidebar Overlay -->
     <div id="sidebar-overlay" class="sidebar-overlay"></div>
 
-    <!-- Sidebar Menu -->
     <div id="sidebar" class="sidebar flex flex-col">
         <div class="p-4 text-gray-100 text-lg font-bold">Menu</div>
         <button id="sidebar-nav-home-btn" class="sidebar-nav-item active">
@@ -209,7 +205,6 @@
         </button>
     </div>
 
-    <!-- Loading Overlay -->
     <div id="loading-overlay" class="fixed inset-0 bg-red-900 bg-opacity-95 flex items-center justify-center z-50">
         <div class="text-center">
             <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-green-500 mx-auto"></div>
@@ -217,12 +212,10 @@
         </div>
     </div>
 
-    <!-- Message Box -->
     <div id="message-box" class="fixed top-4 left-1/2 -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-lg shadow-lg z-50 hidden">
         <p id="message-text"></p>
     </div>
 
-    <!-- Telegram-only access message -->
     <div id="telegram-only-message" class="w-full max-w-md bg-gray-800 rounded-xl shadow-2xl p-6 flex flex-col items-center justify-center min-h-[400px] text-center hidden">
         <i class="fab fa-telegram-plane text-6xl text-blue-400 mb-4"></i>
         <h2 class="text-2xl font-bold text-yellow-400 mb-4">Game Access Restricted</h2>
@@ -230,7 +223,6 @@
         <p class="text-md text-gray-400 mt-2">Please open it via the bot's menu button.</p>
         </div>
 
-    <!-- Referral/Username Input Section (New, hidden by default) -->
     <div id="new-player-setup-section" class="w-full max-w-md bg-gray-800 rounded-xl shadow-2xl p-6 flex flex-col items-center justify-center min-h-[400px] text-center hidden">
         <h2 class="text-3xl font-bold text-center mb-6 text-yellow-400">Welcome to Crypto Tap!</h2>
         <p class="text-center text-gray-300 mb-4">Let's get you set up.</p>
@@ -241,25 +233,19 @@
         </button>
     </div>
 
-    <!-- Main Game Container (All sections are now children of this wrapper) -->
     <div id="game-wrapper" class="w-full max-w-md bg-gray-800 rounded-xl shadow-2xl p-6 relative overflow-hidden" style="min-height: 500px;">
-        <!-- Hamburger Menu Icon -->
         <div id="hamburger-menu-btn" class="absolute top-4 left-4 text-2xl text-gray-300 cursor-pointer z-20">
             <i class="fas fa-bars"></i>
         </div>
-        <!-- User ID Display (Always visible) -->
         <div class="absolute top-4 right-4 text-xs text-gray-400 z-10">
             User ID: <span id="user-id-display" class="font-mono">Loading...</span>
         </div>
 
-        <!-- Section for Main Game -->
         <div id="game-section" class="w-full flex flex-col items-center hidden">
-            <!-- Custom Logo (Bitcoin Icon) -->
             <div id="logo-container" class="mb-4">
                 <i class="fab fa-bitcoin text-6xl text-yellow-500"></i>
             </div>
 
-            <!-- Coins Display -->
             <div class="text-center mb-6">
                 <h1 class="text-5xl font-extrabold text-yellow-400 flex items-center justify-center">
                     <i class="fas fa-coins mr-3"></i> <span id="coins-display">0</span>
@@ -267,13 +253,11 @@
                 <p class="text-md text-gray-400 mt-2">Total Coins</p>
             </div>
 
-            <!-- Energy Bar -->
             <div class="w-full bg-gray-700 rounded-full h-4 mb-8 relative">
                 <div id="energy-bar-fill" class="bg-gradient-to-r from-green-400 to-blue-500 h-full rounded-full energy-bar-fill" style="width: 100%;"></div>
                 <span id="energy-display" class="absolute inset-0 flex items-center justify-center text-xs font-semibold text-white">1000 / 1000</span>
             </div>
 
-            <!-- Tap Button -->
             <div id="tap-area" class="relative w-48 h-48 bg-gradient-to-br from-purple-600 to-indigo-800 rounded-full flex items-center justify-center cursor-pointer shadow-xl transform transition-transform duration-100 active:scale-95 mb-8 overflow-hidden">
                 <div class="absolute inset-0 bg-black opacity-20 rounded-full blur-xl"></div>
                 <i class="fas fa-hand-pointer text-7xl text-white animate-pulse"></i>
@@ -286,11 +270,9 @@
         </div>
 
 
-        <!-- Upgrades Section -->
         <div id="upgrades-section" class="w-full flex flex-col items-center hidden">
             <h2 class="text-2xl font-bold text-center mb-4 text-yellow-300">Boost Your Tapping!</h2>
 
-            <!-- Tap Power Upgrade -->
             <div class="flex items-center justify-between bg-gray-800 p-4 rounded-lg mb-3 shadow-md">
                 <div>
                     <h3 class="font-semibold text-lg text-green-400"><i class="fas fa-fist-raised mr-2"></i> Tap Power <span id="tap-power-level">(Lv. 0)</span></h3>
@@ -301,7 +283,6 @@
                 </button>
             </div>
 
-            <!-- Energy Capacity Upgrade -->
             <div class="flex items-center justify-between bg-gray-800 p-4 rounded-lg mb-3 shadow-md">
                 <div>
                     <h3 class="font-semibold text-lg text-blue-400"><i class="fas fa-battery-full mr-2"></i> Energy Capacity <span id="energy-capacity-level">(Lv. 0)</span></h3>
@@ -312,7 +293,6 @@
                 </button>
             </div>
 
-            <!-- Energy Regeneration Upgrade -->
             <div class="flex items-center justify-between bg-gray-800 p-4 rounded-lg mb-3 shadow-md">
                 <div>
                     <h3 class="font-semibold text-lg text-red-400"><i class="fas fa-charging-station mr-2"></i> Energy Regen <span id="energy-regen-level">(Lv. 0)</span></h3>
@@ -328,7 +308,6 @@
             </button>
         </div>
 
-        <!-- Mining Section -->
         <div id="mining-section" class="w-full flex flex-col items-center hidden">
             <h2 class="text-2xl font-bold text-center mb-4 text-purple-300">Passive Income!</h2>
 
@@ -350,7 +329,6 @@
             </button>
         </div>
 
-        <!-- Referrals Section (Moved and Enhanced) -->
         <div id="referrals-section" class="w-full flex flex-col items-center hidden">
             <h2 class="text-2xl font-bold text-center mb-4 text-green-300"><i class="fas fa-users mr-2"></i> Refer & Earn!</h2>
 
@@ -371,7 +349,6 @@
             </button>
         </div>
 
-        <!-- Redeem Section (New) -->
         <div id="redeem-section" class="w-full flex flex-col items-center hidden">
             <h2 class="text-2xl font-bold text-center mb-4 text-purple-300"><i class="fas fa-trophy mr-2"></i> Redeem Rewards</h2>
 
@@ -393,7 +370,6 @@
             </button>
         </div>
 
-        <!-- Membership Section (New) -->
         <div id="membership-section" class="w-full flex flex-col items-center hidden">
             <h2 class="text-2xl font-bold text-center mb-4 text-blue-300"><i class="fas fa-gem mr-2"></i> Membership Prices</h2>
 
@@ -407,7 +383,6 @@
             </button>
         </div>
 
-        <!-- Dashboard Section (New) -->
         <div id="dashboard-section" class="w-full flex flex-col items-center hidden">
             <h2 class="text-2xl font-bold text-center mb-4 text-yellow-300"><i class="fas fa-chart-bar mr-2"></i> Top 1000 Players</h2>
             <div class="bg-gray-800 p-4 rounded-lg shadow-md w-full max-h-96 overflow-y-auto">
@@ -429,11 +404,9 @@
             </button>
         </div>
 
-        <!-- Settings Section (Updated) -->
         <div id="settings-section" class="w-full flex flex-col items-center hidden">
             <h2 class="text-2xl font-bold text-center mb-4 text-blue-300"><i class="fas fa-cog mr-2"></i> Settings</h2>
 
-            <!-- Username Change Sub-section -->
             <div class="bg-gray-800 p-4 rounded-lg mb-4 shadow-md w-full">
                 <h3 class="font-semibold text-xl text-yellow-400 mb-2"><i class="fas fa-user-edit mr-2"></i> Change Username</h3>
                 <input type="text" id="username-input" placeholder="New Username" class="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4">
@@ -442,7 +415,6 @@
                 </button>
             </div>
 
-            <!-- Levels Sub-section (Moved from main settings) -->
             <div class="bg-gray-800 p-4 rounded-lg mb-4 shadow-md w-full">
                 <h3 class="font-semibold text-xl text-yellow-400 mb-2"><i class="fas fa-star mr-2"></i> Your Level: <span id="player-level-display">1</span></h3>
                 <p class="text-sm text-gray-300">XP (Total Coins Earned): <span id="player-xp-display">0</span> / <span id="next-level-xp-display">1000</span></p>
@@ -474,7 +446,7 @@
 
         // Helper function to show only one section and hide others.
         // Defined at the top level to ensure it's always available.
-        window.showSection = function(sectionToShow) { // Made showSection global
+        function showSection(sectionToShow) {
             console.log(`Attempting to show section: ${sectionToShow.id}`);
             // Hide all main sections by adding 'hidden' class
             gameSection.classList.add('hidden');
@@ -1348,7 +1320,7 @@
 
             recalculateHourlyProfit();
             updateUI();
-            window.showSection(gameSection); // Show the main game section
+            showSection(gameSection); // Show the main game section
             loadingOverlay.classList.add('hidden');
             startGameLoops();
             console.log("New game initialized and UI updated.");
@@ -1422,7 +1394,7 @@
                         if (!gameState.username) {
                             console.log("Existing user has no username, prompting for setup.");
                             loadingOverlay.classList.add('hidden');
-                            window.showSection(newPlayerSetupSection); // Re-use new player setup for username
+                            showSection(newPlayerSetupSection); // Re-use new player setup for username
                             initialReferralCodeInput.value = ''; // Clear referral code for existing user
                             initialReferralCodeInput.disabled = true; // Disable referral input
                             initialUsernameInput.placeholder = 'Enter your Username'; // Adjust placeholder
@@ -1432,13 +1404,13 @@
                                 if (enteredUsername) {
                                     gameState.username = enteredUsername;
                                     saveGameState(); // Save the new username
-                                    window.showSection(gameSection); // Proceed to game
+                                    showSection(gameSection); // Proceed to game
                                 } else {
                                     showMessage("Please enter a username.", 'error');
                                 }
                             };
                         } else {
-                            window.showSection(gameSection); // Explicitly show game section after loading
+                            showSection(gameSection); // Explicitly show game section after loading
                             loadingOverlay.classList.add('hidden'); // Hide loading overlay
                             startGameLoops(); // Start game loops only after data is ready
                             console.log("Game loaded and UI updated.");
@@ -1449,7 +1421,7 @@
                         // New user: Show referral/username input screen
                         console.log("No game state found in Firestore, new user. Showing setup input.");
                         loadingOverlay.classList.add('hidden');
-                        window.showSection(newPlayerSetupSection); // Show new player setup section
+                        showSection(newPlayerSetupSection); // Show new player setup section
                         
                         // Attach event listener for the Start Game button on the referral screen
                         startNewGameBtn.onclick = () => {
