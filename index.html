@@ -477,20 +477,20 @@
         window.showSection = function(sectionToShow) { // Made showSection global
             console.log(`Attempting to show section: ${sectionToShow.id}`);
             // Hide all main sections by adding 'hidden' class
-            gameSection.classList.add('hidden');
-            upgradesSection.classList.add('hidden');
-            miningSection.classList.add('hidden');
-            referralsSection.classList.add('hidden');
-            redeemSection.classList.add('hidden');
-            membershipSection.classList.add('hidden');
-            dashboardSection.classList.add('hidden'); // New
-            settingsSection.classList.add('hidden'); // New
-            newPlayerSetupSection.classList.add('hidden'); // New
-            telegramOnlyMessage.classList.add('hidden'); // Ensure this is also hidden
+            if (gameSection) gameSection.classList.add('hidden');
+            if (upgradesSection) upgradesSection.classList.add('hidden');
+            if (miningSection) miningSection.classList.add('hidden');
+            if (referralsSection) referralsSection.classList.add('hidden');
+            if (redeemSection) redeemSection.classList.add('hidden');
+            if (membershipSection) membershipSection.classList.add('hidden');
+            if (dashboardSection) dashboardSection.classList.add('hidden'); // New
+            if (settingsSection) settingsSection.classList.add('hidden'); // New
+            if (newPlayerSetupSection) newPlayerSetupSection.classList.add('hidden'); // New
+            if (telegramOnlyMessage) telegramOnlyMessage.classList.add('hidden'); // Ensure this is also hidden
 
             // Show the desired section by removing 'hidden' class
-            sectionToShow.classList.remove('hidden');
-            console.log(`Section ${sectionToShow.id} visibility: ${!sectionToShow.classList.contains('hidden')}`);
+            if (sectionToShow) sectionToShow.classList.remove('hidden');
+            console.log(`Section ${sectionToShow.id} visibility: ${sectionToShow ? !sectionToShow.classList.contains('hidden') : 'N/A'}`);
 
             // Special handling for Dashboard to refresh data
             if (sectionToShow === dashboardSection) {
@@ -1681,7 +1681,7 @@
                 });
             }
 
-            // Attach listeners to sidebar navigation buttons (now correctly assigned)
+            // Attach listeners to sidebar navigation buttons
             if (navHomeBtn) navHomeBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Home clicked!"); showSection(gameSection); if(sidebar) sidebar.classList.remove('open'); if(sidebarOverlay) sidebarOverlay.classList.remove('visible'); });
             if (navUpgradesBtn) navUpgradesBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Upgrades clicked!"); showSection(upgradesSection); if(sidebar) sidebar.classList.remove('open'); if(sidebarOverlay) sidebarOverlay.classList.remove('visible'); });
             if (navMinesBtn) navMinesBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Mines clicked!"); showSection(miningSection); if(sidebar) sidebar.classList.remove('open'); if(sidebarOverlay) sidebarOverlay.classList.remove('visible'); });
