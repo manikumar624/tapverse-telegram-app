@@ -1629,14 +1629,15 @@
             redeemCoinsBtn = document.getElementById('redeem-coins-btn');
             redeemStatusMessage = document.getElementById('redeem-status-message');
 
-            navHomeBtn = document.getElementById('sidebar-nav-home-btn'); // Corrected ID
-            navUpgradesBtn = document.getElementById('sidebar-nav-upgrades-btn'); // Corrected ID
-            navMinesBtn = document.getElementById('sidebar-nav-mines-btn');       // Corrected ID
-            navReferralsBtn = document.getElementById('sidebar-nav-referrals-btn'); // Corrected ID
-            navRedeemBtn = document.getElementById('sidebar-nav-redeem-btn');     // Corrected ID
-            navMembershipBtn = document.getElementById('sidebar-nav-membership-btn'); // Corrected ID
-            navDashboardBtn = document.getElementById('sidebar-nav-dashboard-btn'); // Corrected ID
-            navSettingsBtn = document.getElementById('sidebar-nav-settings-btn'); // Corrected ID
+            // Corrected IDs for sidebar navigation buttons
+            navHomeBtn = document.getElementById('sidebar-nav-home-btn');
+            navUpgradesBtn = document.getElementById('sidebar-nav-upgrades-btn');
+            navMinesBtn = document.getElementById('sidebar-nav-mines-btn');
+            navReferralsBtn = document.getElementById('sidebar-nav-referrals-btn');
+            navRedeemBtn = document.getElementById('sidebar-nav-redeem-btn');
+            navMembershipBtn = document.getElementById('sidebar-nav-membership-btn');
+            navDashboardBtn = document.getElementById('sidebar-nav-dashboard-btn');
+            navSettingsBtn = document.getElementById('sidebar-nav-settings-btn');
 
             usernameInput = document.getElementById('username-input');
             saveUsernameBtn = document.getElementById('save-username-btn');
@@ -1680,7 +1681,7 @@
                 });
             }
 
-            // Attach listeners to sidebar navigation buttons
+            // Attach listeners to sidebar navigation buttons (now correctly assigned)
             if (navHomeBtn) navHomeBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Home clicked!"); showSection(gameSection); if(sidebar) sidebar.classList.remove('open'); if(sidebarOverlay) sidebarOverlay.classList.remove('visible'); });
             if (navUpgradesBtn) navUpgradesBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Upgrades clicked!"); showSection(upgradesSection); if(sidebar) sidebar.classList.remove('open'); if(sidebarOverlay) sidebarOverlay.classList.remove('visible'); });
             if (navMinesBtn) navMinesBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Mines clicked!"); showSection(miningSection); if(sidebar) sidebar.classList.remove('open'); if(sidebarOverlay) sidebarOverlay.classList.remove('visible'); });
