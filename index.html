@@ -84,7 +84,7 @@
         }
         .btn-tertiary:active {
             transform: translateY(0);
-            box-shadow: 0 2px 10px rgba(236, 201, 75, 0.2);
+            box-shadow: 0 2px 10px rgba(0, 255, 0, 0.2);
         }
 
         /* Energy bar animation */
@@ -1379,29 +1379,38 @@
                         const loadedState = docSnap.data();
                         gameState = {
                             ...gameState,
-                            ...loadedState,
-                            // Ensure new fields are initialized if old data doesn't have them
-                            referralCode: loadedState.referralCode || generateRandomCode(8), // Generate if missing
-                            isRedeemed: loadedState.isRedeemed || false,
+                            // Initialize fields with defaults if they don't exist in loadedState
+                            coins: loadedState.coins || 0,
+                            energy: loadedState.energy || 1000,
+                            maxEnergy: loadedState.maxEnergy || 1000,
+                            energyRegenRate: loadedState.energyRegenRate || 1,
+                            coinsPerTap: loadedState.coinsPerTap || 1,
+                            lastDailyRewardClaim: loadedState.lastDailyRewardClaim || 0,
+                            upgradeLevels: { 
+                                tapPower: loadedState.upgradeLevels?.tapPower || 0,
+                                energyCapacity: loadedState.upgradeLevels?.energyCapacity || 0,
+                                energyRegen: loadedState.upgradeLevels?.energyRegen || 0
+                            },
+                            hourlyProfit: loadedState.hourlyProfit || 0,
+                            ownedCards: { ...loadedState.ownedCards || {} },
+                            lastProfitCalculationTime: loadedState.lastProfitCalculationTime || Date.now(),
+                            accumulatedProfit: loadedState.accumulatedProfit || 0,
+                            level: loadedState.level || 1,
+                            xp: loadedState.xp || 0, // Ensure XP is initialized
                             referredBy: loadedState.referredBy || null,
                             referredCount: loadedState.referredCount || 0,
                             initialReferralBonusClaimed: loadedState.initialReferralBonusClaimed || false,
-                            username: loadedState.username || null, // Initialize username
-                            upgradeLevels: { ...loadedState.upgradeLevels || {} }, // Ensure nested objects are merged
-                            ownedCards: { ...loadedState.ownedCards || {} } // Ensure nested objects are merged
+                            referralCode: loadedState.referralCode || generateRandomCode(8), // Generate if missing
+                            isRedeemed: loadedState.isRedeemed || false,
+                            username: loadedState.username || null // Initialize username
                         };
                         console.log("Game state loaded/updated from Firestore:", gameState);
 
                         // If referralCode or username was just generated/missing for an old user, save it back
-                        if (!loadedState.referralCode) { // Only save if referralCode was generated
-                            await setDoc(gameDataRef, { referralCode: gameState.referralCode }, { merge: true });
-                            console.log("Generated and saved referralCode for existing user.");
+                        if (!loadedState.referralCode || !loadedState.username) {
+                            await setDoc(gameDataRef, { referralCode: gameState.referralCode, username: gameState.username }, { merge: true });
+                            console.log("Generated and saved referralCode/username for existing user.");
                         }
-                        if (!loadedState.username) { // Only save if username was generated
-                            await setDoc(gameDataRef, { username: gameState.username }, { merge: true });
-                            console.log("Generated and saved username for existing user.");
-                        }
-
 
                         const now = Date.now();
                         const timeElapsedOffline = now - (gameState.lastProfitCalculationTime || now);
@@ -1764,4 +1773,3 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </body>
 </html>
-
