@@ -8,6 +8,12 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <!-- GOOGLE ADSENSE VERIFICATION SCRIPT -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7853419659880222"
+         crossorigin="anonymous"></script>
+    <!-- END OF GOOGLE ADSENSE VERIFICATION SCRIPT -->
+
     <style>
         /* Custom scrollbar for better aesthetics */
         ::-webkit-scrollbar {
@@ -1222,73 +1228,6 @@
         }
 
         /**
-         * Handles the redemption process. (New)
-         */
-        async function handleRedeem() {
-            console.log("Redeem button clicked!");
-            if (gameState.isRedeemed) {
-                showMessage("Reward already redeemed!", 'info');
-                return;
-            }
-
-            const referralsMet = gameState.referredCount >= REDEEM_REQUIREMENTS.referrals;
-            const coinsMet = gameState.xp >= REDEEM_REQUIREMENTS.xp;
-
-            if (referralsMet && coinsMet) {
-                gameState.coins += REDEEM_REQUIREMENTS.reward;
-                gameState.xp += REDEEM_REQUIREMENTS.reward; // XP for redemption reward
-                gameState.isRedeemed = true;
-                showMessage(`Redeemed! You received ${REDEEM_REQUIREMENTS.reward.toLocaleString()} coins!`, 'success');
-                updateUI();
-                await saveGameState();
-                checkLevelUp();
-            } else {
-                let message = "You have not met all redemption requirements:";
-                if (!referralsMet) {
-                    message += ` Need ${REDEEM_REQUIREMENTS.referrals - gameState.referredCount} more referrals.`;
-                }
-                if (!coinsMet) {
-                    message += ` Need ${(REDEEM_REQUIREMENTS.xp - gameState.xp).toLocaleString()} more XP.`;
-                }
-                showMessage(message, 'error');
-            }
-        }
-
-        /**
-         * Handles watching an ad for coins. (Simulated)
-         */
-        async function watchAdForCoins() {
-            const now = Date.now();
-            if (now - gameState.lastAdWatchTime < adCooldownTime) {
-                const timeRemaining = Math.ceil((gameState.lastAdWatchTime + adCooldownTime - now) / 1000);
-                showMessage(`Ad is on cooldown. Try again in ${timeRemaining} seconds.`, 'info');
-                return;
-            }
-
-            if (gameState.coins === 0) {
-                showMessage("Earn some coins first to get a bonus from watching an ad!", 'info');
-                return;
-            }
-
-            showMessage("Ad playing... (simulated)", 'info');
-            if (watchAdBtn) watchAdBtn.disabled = true; // Disable button during ad playback
-
-            // Simulate ad playback duration
-            await new Promise(resolve => setTimeout(resolve, 3000)); // Simulate a 3-second ad
-
-            const reward = Math.floor(gameState.coins * 0.1); // 10% of current coins
-            gameState.coins += reward;
-            gameState.xp += reward; // XP from ad reward
-            gameState.lastAdWatchTime = now; // Set new cooldown time
-
-            showMessage(`Ad watched! You earned ${reward.toLocaleString()} coins!`, 'success');
-            updateUI();
-            saveGameState();
-            checkLevelUp();
-        }
-
-
-        /**
          * Starts the energy regeneration and passive income loops.
          */
         function startGameLoops() {
@@ -1319,6 +1258,39 @@
             if (passiveIncomeInterval) {
                 clearInterval(passiveIncomeInterval);
                 passiveIncomeInterval = null;
+            }
+        }
+
+        /**
+         * Handles the redemption process. (New)
+         */
+        async function handleRedeem() {
+            console.log("Redeem button clicked!");
+            if (gameState.isRedeemed) {
+                showMessage("Reward already redeemed!", 'info');
+                return;
+            }
+
+            const referralsMet = gameState.referredCount >= REDEEM_REQUIREMENTS.referrals;
+            const coinsMet = gameState.xp >= REDEEM_REQUIREMENTS.xp;
+
+            if (referralsMet && coinsMet) {
+                gameState.coins += REDEEM_REQUIREMENTS.reward;
+                gameState.xp += REDEEM_REQUIREMENTS.reward; // XP for redemption reward
+                gameState.isRedeemed = true;
+                showMessage(`Redeemed! You received ${REDEEM_REQUIREMENTS.reward.toLocaleString()} coins!`, 'success');
+                updateUI();
+                await saveGameState();
+                checkLevelUp();
+            } else {
+                let message = "You have not met all redemption requirements:";
+                if (!referralsMet) {
+                    message += ` Need ${REDEEM_REQUIREMENTS.referrals - gameState.referredCount} more referrals.`;
+                }
+                if (!coinsMet) {
+                    message += ` Need ${(REDEEM_REQUIREMENTS.xp - gameState.xp).toLocaleString()} more XP.`;
+                }
+                showMessage(message, 'error');
             }
         }
 
@@ -1758,23 +1730,23 @@
             }
 
             // Attach listeners to sidebar navigation buttons
-            if (navHomeBtn) navHomeBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Home clicked!"); showSection(gameSection); if(sidebar) sidebar.classList.remove('open'); if(sidebarOverlay) sidebarOverlay.classList.remove('visible'); });
-            if (navUpgradesBtn) navUpgradesBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Upgrades clicked!"); showSection(upgradesSection); if(sidebar) sidebar.classList.remove('open'); if(sidebarOverlay) sidebarOverlay.classList.remove('visible'); });
-            if (navMinesBtn) navMinesBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Mines clicked!"); showSection(miningSection); if(sidebar) sidebar.classList.remove('open'); if(sidebarOverlay) sidebarOverlay.classList.remove('visible'); });
-            if (navReferralsBtn) navReferralsBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Referrals clicked!"); showSection(referralsSection); if(sidebar) sidebar.classList.remove('open'); if(sidebarOverlay) sidebarOverlay.classList.remove('visible'); });
-            if (navRedeemBtn) navRedeemBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Redeem clicked!"); showSection(redeemSection); updateUI(); if(sidebar) sidebar.classList.remove('open'); if(sidebarOverlay) sidebarOverlay.classList.remove('visible'); });
-            if (navMembershipBtn) navMembershipBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Membership clicked!"); showSection(membershipSection); if(sidebar) sidebar.classList.remove('open'); if(sidebarOverlay) sidebarOverlay.classList.remove('visible'); });
-            if (navDashboardBtn) navDashboardBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Dashboard clicked!"); showSection(dashboardSection); if(sidebar) sidebar.classList.remove('open'); if(sidebarOverlay) sidebarOverlay.classList.remove('visible'); });
-            if (navSettingsBtn) navSettingsBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Settings clicked!"); showSection(settingsSection); updateUI(); if(sidebar) sidebar.classList.remove('open'); if(sidebarOverlay) sidebarOverlay.classList.remove('visible'); });
+            if (navHomeBtn) navHomeBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Home clicked!"); window.showSection(gameSection); if(sidebar) sidebar.classList.remove('open'); if(sidebarOverlay) sidebarOverlay.classList.remove('visible'); });
+            if (navUpgradesBtn) navUpgradesBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Upgrades clicked!"); window.showSection(upgradesSection); if(sidebar) sidebar.classList.remove('open'); if(sidebarOverlay) sidebarOverlay.classList.remove('visible'); });
+            if (navMinesBtn) navMinesBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Mines clicked!"); window.showSection(miningSection); if(sidebar) sidebar.classList.remove('open'); if(sidebarOverlay) sidebarOverlay.classList.remove('visible'); });
+            if (navReferralsBtn) navReferralsBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Referrals clicked!"); window.showSection(referralsSection); if(sidebar) sidebar.classList.remove('open'); if(sidebarOverlay) sidebarOverlay.classList.remove('visible'); });
+            if (navRedeemBtn) navRedeemBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Redeem clicked!"); window.showSection(redeemSection); updateUI(); if(sidebar) sidebar.classList.remove('open'); if(sidebarOverlay) sidebarOverlay.classList.remove('visible'); });
+            if (navMembershipBtn) navMembershipBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Membership clicked!"); window.showSection(membershipSection); if(sidebar) sidebar.classList.remove('open'); if(sidebarOverlay) sidebarOverlay.classList.remove('visible'); });
+            if (navDashboardBtn) navDashboardBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Dashboard clicked!"); window.showSection(dashboardSection); if(sidebar) sidebar.classList.remove('open'); if(sidebarOverlay) sidebarOverlay.classList.remove('visible'); });
+            if (navSettingsBtn) navSettingsBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Nav Settings clicked!"); window.showSection(settingsSection); updateUI(); if(sidebar) sidebar.classList.remove('open'); if(sidebarOverlay) sidebarOverlay.classList.remove('visible'); });
 
 
-            if (closeUpgradesBtn) closeUpgradesBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Closing upgrades section!"); showSection(gameSection); });
-            if (closeMiningBtn) closeMiningBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Closing mining section!"); showSection(gameSection); });
-            if (closeReferralsBtn) closeReferralsBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Closing referrals section!"); showSection(gameSection); });
-            if (closeRedeemBtn) closeRedeemBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Closing redeem section!"); showSection(gameSection); });
-            if (closeMembershipBtn) closeMembershipBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Closing membership section!"); showSection(gameSection); });
-            if (closeDashboardBtn) closeDashboardBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Closing dashboard section!"); showSection(gameSection); });
-            if (closeSettingsBtn) closeSettingsBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Closing settings section!"); showSection(gameSection); });
+            if (closeUpgradesBtn) closeUpgradesBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Closing upgrades section!"); window.showSection(gameSection); });
+            if (closeMiningBtn) closeMiningBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Closing mining section!"); window.showSection(gameSection); });
+            if (closeReferralsBtn) closeReferralsBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Closing referrals section!"); window.showSection(gameSection); });
+            if (closeRedeemBtn) closeRedeemBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Closing redeem section!"); window.showSection(gameSection); });
+            if (closeMembershipBtn) closeMembershipBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Closing membership section!"); window.showSection(gameSection); });
+            if (closeDashboardBtn) closeDashboardBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Closing dashboard section!"); window.showSection(gameSection); });
+            if (closeSettingsBtn) closeSettingsBtn.addEventListener('click', (event) => { event.preventDefault(); console.log("Closing settings section!"); window.showSection(gameSection); });
 
             if (claimProfitBtn) claimProfitBtn.addEventListener('click', claimAccumulatedProfit);
             if (upgradeTapPowerBtn) upgradeTapPowerBtn.addEventListener('click', () => purchaseUpgrade('tapPower'));
@@ -1841,4 +1813,3 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </body>
 </html>
-
