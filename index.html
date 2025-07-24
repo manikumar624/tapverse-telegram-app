@@ -1271,7 +1271,7 @@
             }
 
             showMessage("Ad playing... (simulated)", 'info');
-            watchAdBtn.disabled = true; // Disable button during ad playback
+            if (watchAdBtn) watchAdBtn.disabled = true; // Disable button during ad playback
 
             // Simulate ad playback duration
             await new Promise(resolve => setTimeout(resolve, 3000)); // Simulate a 3-second ad
@@ -1814,7 +1814,7 @@
                     telegramOnlyMessage.classList.remove('hidden');
                     document.getElementById('telegram-only-message').innerHTML = `
                         <i class="fas fa-exclamation-triangle text-6xl text-red-400 mb-4"></i>
-                        <h2 class="text-2xl font-bold text-red-400 mb-4">Telegram User Error</h2>
+                        <h2 class="text-2xl font-bold text-red-400 mb-4">Game Error</h2>
                         <p class="text-lg text-gray-300">Could not retrieve your Telegram User ID. Please ensure you are logged into Telegram.</p>
                         <p class="text-md text-gray-400 mt-2">If the issue persists, try restarting Telegram or your device.</p>
                     `;
