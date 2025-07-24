@@ -345,6 +345,10 @@
             <div id="cards-list" class="space-y-3">
                 </div>
 
+            <button id="watch-ad-btn" class="btn-tertiary w-full py-3 px-4 rounded-xl font-bold text-lg mt-4">
+                <i class="fas fa-video mr-2"></i> Watch Ad for 10% Coins
+            </button>
+
             <button id="close-mining-btn" class="btn-secondary w-full py-3 px-4 rounded-xl font-bold text-lg mt-4">
                 <i class="fas fa-arrow-left mr-2"></i> Back
             </button>
@@ -589,6 +593,11 @@
         let sidebar;
         let sidebarOverlay;
 
+        // Ad-related variables
+        let watchAdBtn; // New button for watching ads
+        let adCooldownTime = 30 * 1000; // 30 seconds cooldown
+        let lastAdWatchTime = 0; // Timestamp of last ad watch
+
 
         // Global variables for Firebase config and app ID
         // HARDCODED FOR DEBUGGING - REMOVE THIS BLOCK AND USE VERCEL ENV VARS FOR PRODUCTION
@@ -655,7 +664,8 @@
             initialReferralBonusClaimed: false, // To ensure a user only gets the bonus once
             isRedeemed: false, // New: to track if redemption has been done
             referralCode: null, // New: Unique random referral code for this user
-            username: null // New: User's chosen username
+            username: null, // New: User's chosen username
+            lastAdWatchTime: 0 // New: Timestamp for ad cooldown
         };
 
         const ONE_CRORE_COINS = 10000000; // Define 1 crore for clarity
@@ -1013,6 +1023,20 @@
 
             // Update Username in Settings
             if (usernameInput) usernameInput.value = gameState.username || '';
+
+            // Update Watch Ad button state
+            if (watchAdBtn) {
+                const now = Date.now();
+                const timeRemaining = (gameState.lastAdWatchTime + adCooldownTime) - now;
+                if (timeRemaining > 0) {
+                    const secondsRemaining = Math.ceil(timeRemaining / 1000);
+                    watchAdBtn.disabled = true;
+                    watchAdBtn.textContent = `Ad Cooldown (${secondsRemaining}s)`;
+                } else {
+                    watchAdBtn.disabled = false;
+                    watchAdBtn.textContent = `Watch Ad for ${Math.floor(gameState.coins * 0.1).toLocaleString()} Coins`;
+                }
+            }
         }
 
         /**
@@ -1198,6 +1222,73 @@
         }
 
         /**
+         * Handles the redemption process. (New)
+         */
+        async function handleRedeem() {
+            console.log("Redeem button clicked!");
+            if (gameState.isRedeemed) {
+                showMessage("Reward already redeemed!", 'info');
+                return;
+            }
+
+            const referralsMet = gameState.referredCount >= REDEEM_REQUIREMENTS.referrals;
+            const coinsMet = gameState.xp >= REDEEM_REQUIREMENTS.xp;
+
+            if (referralsMet && coinsMet) {
+                gameState.coins += REDEEM_REQUIREMENTS.reward;
+                gameState.xp += REDEEM_REQUIREMENTS.reward; // XP for redemption reward
+                gameState.isRedeemed = true;
+                showMessage(`Redeemed! You received ${REDEEM_REQUIREMENTS.reward.toLocaleString()} coins!`, 'success');
+                updateUI();
+                await saveGameState();
+                checkLevelUp();
+            } else {
+                let message = "You have not met all redemption requirements:";
+                if (!referralsMet) {
+                    message += ` Need ${REDEEM_REQUIREMENTS.referrals - gameState.referredCount} more referrals.`;
+                }
+                if (!coinsMet) {
+                    message += ` Need ${(REDEEM_REQUIREMENTS.xp - gameState.xp).toLocaleString()} more XP.`;
+                }
+                showMessage(message, 'error');
+            }
+        }
+
+        /**
+         * Handles watching an ad for coins. (Simulated)
+         */
+        async function watchAdForCoins() {
+            const now = Date.now();
+            if (now - gameState.lastAdWatchTime < adCooldownTime) {
+                const timeRemaining = Math.ceil((gameState.lastAdWatchTime + adCooldownTime - now) / 1000);
+                showMessage(`Ad is on cooldown. Try again in ${timeRemaining} seconds.`, 'info');
+                return;
+            }
+
+            if (gameState.coins === 0) {
+                showMessage("Earn some coins first to get a bonus from watching an ad!", 'info');
+                return;
+            }
+
+            showMessage("Ad playing... (simulated)", 'info');
+            watchAdBtn.disabled = true; // Disable button during ad playback
+
+            // Simulate ad playback duration
+            await new Promise(resolve => setTimeout(resolve, 3000)); // Simulate a 3-second ad
+
+            const reward = Math.floor(gameState.coins * 0.1); // 10% of current coins
+            gameState.coins += reward;
+            gameState.xp += reward; // XP from ad reward
+            gameState.lastAdWatchTime = now; // Set new cooldown time
+
+            showMessage(`Ad watched! You earned ${reward.toLocaleString()} coins!`, 'success');
+            updateUI();
+            saveGameState();
+            checkLevelUp();
+        }
+
+
+        /**
          * Starts the energy regeneration and passive income loops.
          */
         function startGameLoops() {
@@ -1228,39 +1319,6 @@
             if (passiveIncomeInterval) {
                 clearInterval(passiveIncomeInterval);
                 passiveIncomeInterval = null;
-            }
-        }
-
-        /**
-         * Handles the redemption process. (New)
-         */
-        async function handleRedeem() {
-            console.log("Redeem button clicked!");
-            if (gameState.isRedeemed) {
-                showMessage("Reward already redeemed!", 'info');
-                return;
-            }
-
-            const referralsMet = gameState.referredCount >= REDEEM_REQUIREMENTS.referrals;
-            const coinsMet = gameState.xp >= REDEEM_REQUIREMENTS.xp;
-
-            if (referralsMet && coinsMet) {
-                gameState.coins += REDEEM_REQUIREMENTS.reward;
-                gameState.xp += REDEEM_REQUIREMENTS.reward; // XP for redemption reward
-                gameState.isRedeemed = true;
-                showMessage(`Redeemed! You received ${REDEEM_REQUIREMENTS.reward.toLocaleString()} coins!`, 'success');
-                updateUI();
-                await saveGameState();
-                checkLevelUp();
-            } else {
-                let message = "You have not met all redemption requirements:";
-                if (!referralsMet) {
-                    message += ` Need ${REDEEM_REQUIREMENTS.referrals - gameState.referredCount} more referrals.`;
-                }
-                if (!coinsMet) {
-                    message += ` Need ${(REDEEM_REQUIREMENTS.xp - gameState.xp).toLocaleString()} more XP.`;
-                }
-                showMessage(message, 'error');
             }
         }
 
@@ -1402,7 +1460,8 @@
                             initialReferralBonusClaimed: loadedState.initialReferralBonusClaimed || false,
                             referralCode: loadedState.referralCode || generateRandomCode(8), // Generate if missing
                             isRedeemed: loadedState.isRedeemed || false,
-                            username: loadedState.username || null // Initialize username
+                            username: loadedState.username || null, // Initialize username
+                            lastAdWatchTime: loadedState.lastAdWatchTime || 0 // Initialize ad cooldown
                         };
                         console.log("Game state loaded/updated from Firestore:", gameState);
 
@@ -1661,6 +1720,9 @@
             sidebar = document.getElementById('sidebar');
             sidebarOverlay = document.getElementById('sidebar-overlay');
 
+            // New ad-related button
+            watchAdBtn = document.getElementById('watch-ad-btn');
+
 
             loadingOverlay.classList.remove('hidden'); // Now safe to access
 
@@ -1734,6 +1796,7 @@
             });
             if (redeemCoinsBtn) redeemCoinsBtn.addEventListener('click', handleRedeem);
             if (saveUsernameBtn) saveUsernameBtn.addEventListener('click', saveUsername); // New listener for saving username
+            if (watchAdBtn) watchAdBtn.addEventListener('click', watchAdForCoins); // Attach listener for watch ad button
 
 
             // Check if Telegram WebApp object is available and has user data
@@ -1751,7 +1814,7 @@
                     telegramOnlyMessage.classList.remove('hidden');
                     document.getElementById('telegram-only-message').innerHTML = `
                         <i class="fas fa-exclamation-triangle text-6xl text-red-400 mb-4"></i>
-                        <h2 class="text-2xl font-bold text-red-400 mb-4">Game Error</h2>
+                        <h2 class="text-2xl font-bold text-red-400 mb-4">Telegram User Error</h2>
                         <p class="text-lg text-gray-300">Could not retrieve your Telegram User ID. Please ensure you are logged into Telegram.</p>
                         <p class="text-md text-gray-400 mt-2">If the issue persists, try restarting Telegram or your device.</p>
                     `;
@@ -1778,5 +1841,3 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </body>
 </html>
-
-
